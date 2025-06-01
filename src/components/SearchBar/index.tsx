@@ -2,7 +2,7 @@ import React from 'react';
 import { TextInput, StyleSheet, View, Image, Text } from 'react-native';
 import { theme } from '../../theme/theme';
 
-const logo = require('../../../assets/favicon.png');
+const logo = require('../../../assets/logoden.png');
 
 const SearchBar = () => {
   return (
@@ -26,6 +26,7 @@ const SearchBar = () => {
 
 const styles = StyleSheet.create({
   container: {
+    paddingTop: theme.spacing.md*2,
     width: '100%',
     paddingHorizontal: theme.spacing.md,
   },

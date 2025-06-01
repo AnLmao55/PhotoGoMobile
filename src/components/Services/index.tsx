@@ -41,11 +41,14 @@ const styles = StyleSheet.create({
         marginBottom: theme.spacing.sm,
     },
     sectionTitle: {
+        flex: 1,
+        paddingHorizontal: theme.spacing.md,
         fontSize: theme.fontSizes.md,
         color: theme.colors.text,
         fontWeight: 'bold',
     },
     viewAll: {
+        paddingHorizontal: theme.spacing.md,
         color: theme.colors.primary,
         fontSize: theme.fontSizes.sm,
     },
@@ -53,10 +56,12 @@ const styles = StyleSheet.create({
         marginBottom: theme.spacing.lg,
     },
     serviceCard: {
-        marginRight: theme.spacing.md,
+        
+        marginLeft: theme.spacing.md,
         alignItems: 'center',
     },
     serviceImage: {
+        
         width: 80,
         height: 80,
         borderRadius: 20,
