@@ -3,11 +3,14 @@ import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, Alert } fro
 import { theme } from '../theme/theme';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
+
+const logo = require('../../assets/logocam.png'); // Adjust the path as necessary
 const LoginScreen: React.FC = () => {
   const navigation = useNavigation();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  
   const handleLogin = () => {
     if (!username || !password) {
       Alert.alert('Lỗi', 'Vui lòng nhập tên đăng nhập và mật khẩu');
@@ -17,7 +20,7 @@ const LoginScreen: React.FC = () => {
     // Add your authentication logic here
     if (username === 'test' && password === '123') {
       // Navigate to MainApp instead of Home
-      navigation.navigate('Home');
+      navigation.navigate('MainTabs');
     } else {
       Alert.alert('Lỗi', 'Tên đăng nhập hoặc mật khẩu không đúng');
     }
@@ -48,7 +51,7 @@ const LoginScreen: React.FC = () => {
         style={styles.tripodImage}
       />
       <Image
-        source={{ uri: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQp16OHeaeQhm_aPVmShyIruI1N3jvshRhWTQ&s' }}
+        source={logo}
         style={styles.logo}
       />
       <TextInput
@@ -97,12 +100,7 @@ const LoginScreen: React.FC = () => {
             style={styles.socialIcon}
           />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.socialButton} onPress={handleFacebookLogin}>
-          <Image
-            source={{ uri: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/2023_Facebook_icon.svg/2048px-2023_Facebook_icon.svg.png' }}
-            style={styles.socialIcon}
-          />
-        </TouchableOpacity>
+        
       </View>
       <TouchableOpacity onPress={handleRegister}>
         <Text style={styles.register}>Chưa có tài khoản? Đăng ký ngay</Text>
@@ -123,7 +121,8 @@ const styles = StyleSheet.create({
   logo: {
     width: 100,
     height: 100,
-    marginBottom: theme.spacing.lg,
+    marginBottom: theme.spacing.md,
+    resizeMode: 'contain',
   },
   title: {
     fontSize: theme.fontSizes.lg,
