@@ -13,7 +13,7 @@ const SearchBar = () => {
           style={styles.headerLogo}
           resizeMode="contain"
         />
-        <Text style={styles.location}>Deliver to New York 10150</Text>
+        <Text style={styles.location}>320/16 Võ Văn Hát, Long Trường</Text>
       </View>
       <TextInput
         style={styles.search}

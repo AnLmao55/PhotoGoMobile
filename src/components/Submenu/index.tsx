@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import { theme } from '../../theme/theme';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 
 interface SubmenuItem {
   id: string;
@@ -17,14 +18,20 @@ interface SubmenuProps {
 const defaultItems: SubmenuItem[] = [
   { id: '1', label: 'Giảm giá', icon: 'pricetag' },
   { id: '2', label: 'Trò chơi', icon: 'game-controller' },
-  { id: '3', label: 'Flash Sale', icon: 'flash' },
-  { id: '4', label: 'Ưu đãi', icon: 'gift' },
-  { id: '5', label: 'Mới', icon: 'star' },
+  { id: '3', label: 'Quay thưởng', icon: 'aperture-outline' },
+  { id: '4', label: 'Flash Sale', icon: 'flash' },
+  { id: '5', label: 'Ưu đãi', icon: 'gift' },
   { id: '6', label: 'Mới', icon: 'star' },
+  
 ];
 
 const Submenu: React.FC<SubmenuProps> = ({ items = defaultItems, onItemPress }) => {
+  const navigation = useNavigation();
+
   const handlePress = (item: SubmenuItem) => {
+    if (item.id === '3') { // Quay thưởng item
+      navigation.navigate('SpinPrize');
+    }
     if (onItemPress) {
       onItemPress(item);
     }

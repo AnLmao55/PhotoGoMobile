@@ -12,8 +12,8 @@ interface StudioItem {
 }
 
 const studioData: StudioItem[] = [
-  { id: '1', image: 'https://plus.unsplash.com/premium_photo-1664474619075-644dd191935f?fm=jpg&q=60&w=3000&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8aW1hZ2V8ZW58MHx8MHx8fDA%3D', name: 'Studio 1', rating: 4.5, price: '180K' },
-  { id: '2', image: 'https://plus.unsplash.com/premium_photo-1664474619075-644dd191935f?fm=jpg&q=60&w=3000&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8aW1hZ2V8ZW58MHx8MHx8fDA%3D', name: 'Studio 2', rating: 4.0, price: '180K' },
+  { id: '1', image: 'https://chothuestudio.com/wp-content/uploads/2021/09/cho-thue-studio-chup-anh-tp.hcm_.jpg', name: 'Godox Studio', rating: 4.5, price: '180K' },
+  { id: '2', image: 'https://dstudio.vn/wp-content/uploads/2022/05/DSTUDIO-Cho-thue-phong-studio.jpg', name: 'D.Studio', rating: 4.0, price: '180K' },
   { id: '3', image: 'https://plus.unsplash.com/premium_photo-1664474619075-644dd191935f?fm=jpg&q=60&w=3000&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8aW1hZ2V8ZW58MHx8MHx8fDA%3D', name: 'Studio 3', rating: 4.8, price: '180K' },
   { id: '4', image: 'https://plus.unsplash.com/premium_photo-1664474619075-644dd191935f?fm=jpg&q=60&w=3000&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8aW1hZ2V8ZW58MHx8MHx8fDA%3D', name: 'Studio 4', rating: 4.2, price: '180K' },
 ];
