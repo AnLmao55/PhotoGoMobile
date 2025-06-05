@@ -1,9 +1,9 @@
 import React, { useState, useRef } from 'react';
-import { 
-  View, 
-  ScrollView, 
-  Image, 
-  Dimensions, 
+import {
+  View,
+  ScrollView,
+  Image,
+  Dimensions,
   Text,
   StyleSheet,
   TouchableOpacity,
@@ -26,10 +26,10 @@ interface CarouselProps {
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const ITEM_WIDTH = SCREEN_WIDTH - 2 * theme.spacing.md; // Account for HomeScreen padding
 
-const Carousel: React.FC<CarouselProps> = ({ 
-  data, 
-  autoPlay = true, 
-  interval = 3000 
+const Carousel: React.FC<CarouselProps> = ({
+  data,
+  autoPlay = true,
+  interval = 3000
 }) => {
   const [activeIndex, setActiveIndex] = useState(0);
   const scrollViewRef = useRef<ScrollView>(null);
@@ -41,9 +41,9 @@ const Carousel: React.FC<CarouselProps> = ({
       timer = setInterval(() => {
         const nextIndex = activeIndex === data.length - 1 ? 0 : activeIndex + 1;
         setActiveIndex(nextIndex);
-        scrollViewRef.current?.scrollTo({ 
-          x: ITEM_WIDTH * nextIndex, 
-          animated: true 
+        scrollViewRef.current?.scrollTo({
+          x: ITEM_WIDTH * nextIndex,
+          animated: true
         });
         Animated.sequence([
           Animated.timing(fadeAnim, {
@@ -79,7 +79,7 @@ const Carousel: React.FC<CarouselProps> = ({
       <View style={styles.premiumBadge}>
         <Text style={styles.premiumBadgeText}>Premium</Text>
       </View>
-      
+
       <ScrollView
         ref={scrollViewRef}
         horizontal
@@ -92,8 +92,8 @@ const Carousel: React.FC<CarouselProps> = ({
         decelerationRate="fast"
       >
         {data.map((item, index) => (
-          <Animated.View 
-            key={item.id} 
+          <Animated.View
+            key={item.id}
             style={[styles.slide, { opacity: fadeAnim }]}
           >
             <Image
@@ -103,7 +103,7 @@ const Carousel: React.FC<CarouselProps> = ({
             />
             <View style={styles.textContainer}>
               <Text style={styles.title}>{item.title}</Text>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.bookButton}
                 onPress={handleBookNow}
               >
@@ -113,7 +113,7 @@ const Carousel: React.FC<CarouselProps> = ({
           </Animated.View>
         ))}
       </ScrollView>
-      
+
       <View style={styles.pagination}>
         {data.map((_, index) => (
           <TouchableOpacity
@@ -124,9 +124,9 @@ const Carousel: React.FC<CarouselProps> = ({
             ]}
             onPress={() => {
               setActiveIndex(index);
-              scrollViewRef.current?.scrollTo({ 
-                x: ITEM_WIDTH * index, 
-                animated: true 
+              scrollViewRef.current?.scrollTo({
+                x: ITEM_WIDTH * index,
+                animated: true
               });
             }}
           />
@@ -156,13 +156,13 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
-    
+
   },
   image: {
     width: '100%',
     height: '100%',
     borderRadius: 16,
-    
+
   },
   textContainer: {
     position: 'absolute',
@@ -198,7 +198,7 @@ const styles = StyleSheet.create({
   pagination: {
     flexDirection: 'row',
     position: 'absolute',
-    bottom: theme.spacing.lg+3,
+    bottom: theme.spacing.lg + 3,
     alignSelf: 'center',
     zIndex: 2,
   },
@@ -231,7 +231,7 @@ const styles = StyleSheet.create({
     marginLeft: theme.spacing.sm,
   },
   premiumBadgeText: {
-    
+
     color: theme.colors.text,
     fontSize: theme.fontSizes.sm,
     fontWeight: '700',
