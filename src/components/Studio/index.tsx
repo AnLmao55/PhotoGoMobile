@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, FlatList, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { theme } from '../../theme/theme';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 
 interface StudioItem {
   id: string;
@@ -19,20 +20,38 @@ const studioData: StudioItem[] = [
 ];
 
 const Studio: React.FC = () => {
+  const navigation = useNavigation();
   const renderItem = ({ item }: { item: StudioItem }) => (
-    <View style={styles.card}>
+    <TouchableOpacity
+      style={styles.card}
+      onPress={() => {
+        console.log('Pressed:', item.name);
+        // Or navigate to detail screen
+        navigation.navigate('Detail');
+      }}
+    >
       <Image source={{ uri: item.image }} style={styles.image} />
       <Text style={styles.name}>{item.name}</Text>
+
       <View style={styles.ratingContainer}>
         <Ionicons name="star" size={16} color="#FFD700" />
         <Text style={styles.rating}>{item.rating}</Text>
         <Text style={styles.price}>{`(${item.price})`}</Text>
       </View>
-      <TouchableOpacity style={styles.favoriteIcon}>
+
+      <TouchableOpacity
+        style={styles.favoriteIcon}
+        onPress={() => {
+          console.log('Favorited:', item.name);
+          // Optional: handle favorite separately
+
+        }}
+      >
         <Ionicons name="heart-outline" size={24} color={theme.colors.text} />
       </TouchableOpacity>
-    </View>
+    </TouchableOpacity>
   );
+
 
   return (
     <View style={styles.container}>
@@ -43,6 +62,7 @@ const Studio: React.FC = () => {
         </TouchableOpacity>
       </View>
       <FlatList
+
         data={studioData}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
