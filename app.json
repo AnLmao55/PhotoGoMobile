@@ -12,6 +12,9 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
+    "scheme": [
+      "photogo"
+    ],
     "ios": {
       "supportsTablet": true
     },
@@ -20,10 +23,27 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.mobile.PhotoGo"
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-web-browser"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "adafe393-7132-412f-9616-d7965ad54c01"
+      }
+    },
+    "updates": {
+      "enabled": true,
+      "url": "https://u.expo.dev/adafe393-7132-412f-9616-d7965ad54c01",
+      "runtimeVersion": "sdkVersion"
+    },
+    "runtimeVersion": {
+      "policy": "sdkVersion"
     }
   }
 }
