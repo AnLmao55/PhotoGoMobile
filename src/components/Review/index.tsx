@@ -93,7 +93,7 @@ const styles = StyleSheet.create({
     flex: 1,
     marginVertical: theme.spacing.lg,
     paddingHorizontal: theme.spacing.md,
-    marginBottom: theme.spacing.xl,
+    marginBottom: theme.spacing.xl+30,
   },
   sectionTitle: {
     fontSize: theme.fontSizes.md,
