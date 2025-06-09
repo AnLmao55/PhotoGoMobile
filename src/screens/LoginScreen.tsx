@@ -24,9 +24,10 @@ const LoginScreen: React.FC = () => {
   // Khởi tạo GoogleSignin
   useEffect(() => {
     GoogleSignin.configure({
-      webClientId: "37cndij0l40qrpnma9ptp1uu40ant5jn.apps.googleusercontent.com", // Sử dụng Web Client ID của bạn
-      offlineAccess: true,
-      forceCodeForRefreshToken: true,
+    webClientId: '1049648822582-70tufheollgie37gi6cti4f6aaarvi0o.apps.googleusercontent.com', // Web client ID from Google Cloud Console
+    // androidClientId: '1049648822582-70tufheollgie37gi6cti4f6aaarvi0o.apps.googleusercontent.com', // Add this
+    offlineAccess: true,
+    forceCodeForRefreshToken: true,
     })
   }, [])
 

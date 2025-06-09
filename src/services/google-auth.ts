@@ -16,7 +16,7 @@ class GoogleAuthService {
 
   private configure() {
     GoogleSignin.configure({
-      webClientId: "1049648822582-37cndij0l40qrpnma9ptp1uu40ant5jn.apps.googleusercontent.com", // Từ Google Cloud Console
+      webClientId: "1049648822582-70tufheollgie37gi6cti4f6aaarvi0o.apps.googleusercontent.com", // Từ Google Cloud Console
       offlineAccess: true,
       hostedDomain: "", // Để trống nếu không có domain riêng
       forceCodeForRefreshToken: true,
