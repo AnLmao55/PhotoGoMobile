@@ -26,7 +26,7 @@ export default function App() {
           component={SpinPrizeGame}
           options={{
             title: 'Quay thưởng',
-            headerShown: false
+            headerShown: true
           }}
         />
         <Stack.Screen name='Detail' component={DetailScreen} />
