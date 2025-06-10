@@ -54,7 +54,7 @@ const LoginScreen: React.FC = () => {
       console.log("Initiating Google login...")
 
       // Kiểm tra Google Play Services
-      await GoogleSignin.hasPlayServices()
+      // await GoogleSignin.hasPlayServices()
 
       // Đăng nhập và lấy thông tin người dùng
       const userInfo = await GoogleSignin.signIn()

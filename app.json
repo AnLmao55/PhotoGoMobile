@@ -10,14 +10,16 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff",
-
+      "backgroundColor": "#ffffff"
     },
     "scheme": [
       "photogo"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "runtimeVersion": {
+        "policy": "appVersion"
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -45,6 +47,5 @@
       "url": "https://u.expo.dev/adafe393-7132-412f-9616-d7965ad54c01",
       "runtimeVersion": "1.0.0"
     }
-    
   }
 }
