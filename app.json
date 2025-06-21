@@ -35,7 +35,13 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Cho phép PhotoGo sử dụng vị trí của bạn."
+        }
+      ]
     ],
     "extra": {
       "eas": {
@@ -46,6 +52,9 @@
       "enabled": true,
       "url": "https://u.expo.dev/adafe393-7132-412f-9616-d7965ad54c01",
       "runtimeVersion": "1.0.0"
-    }
+    },
+    "permissions": [
+      "location"
+    ]
   }
 }
