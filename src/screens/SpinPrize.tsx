@@ -49,9 +49,9 @@ const prizes: Prize[] = [
   },
   {
     id: '4',
-    name: 'Chúc may mắn',
+    name: 'Chúc may mắn lần sau',
     image: '🍀',
-    probability: 0.3,
+    probability: 0.37,
     color: '#96CEB4', // No direct theme match
   },
   {
@@ -63,9 +63,9 @@ const prizes: Prize[] = [
   },
   {
     id: '6',
-    name: 'Thử lại',
+    name: '1 lần thử lại',
     image: '🔄',
-    probability: 0.29,
+    probability: 0.22,
     color: '#DDA0DD', // No direct theme match
   },
 ];
@@ -100,7 +100,7 @@ const SpinPrizeGame: React.FC = () => {
     const prizeIndex = prizes.findIndex(p => p.id === selectedPrize.id);
     const targetAngle = prizeIndex * anglePerSection;
     const spins = 5;
-    const finalAngle = 360 * spins + (360 - targetAngle) + (anglePerSection / 2);
+    const finalAngle = 420 * spins + (360 - targetAngle) + (anglePerSection / 2);
 
     spinValue.setValue(0);
 
@@ -117,12 +117,12 @@ const SpinPrizeGame: React.FC = () => {
       const calculatedPrizeIndex = Math.floor(normalizedAngle / anglePerSection);
       const calculatedPrize = prizes[calculatedPrizeIndex];
 
-      console.log('Selected Prize:', selectedPrize.name);
-      console.log('Calculated Prize from angle:', calculatedPrize.name);
+      // console.log('Selected Prize:', selectedPrize.name);
+      // console.log('Calculated Prize from angle:', calculatedPrize.name);
 
-      if (calculatedPrize.id !== selectedPrize.id) {
-        console.warn('Prize mismatch! Expected:', selectedPrize.name, 'but got:', calculatedPrize.name);
-      }
+      // if (calculatedPrize.id !== selectedPrize.id) {
+      //   console.warn('Prize mismatch! Expected:', selectedPrize.name, 'but got:', calculatedPrize.name);
+      // }
 
       // Hiển thị kết quả
       setTimeout(() => {
@@ -165,7 +165,7 @@ const SpinPrizeGame: React.FC = () => {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={[theme.colors.background, theme.colors.secondary]}
+        colors={[theme.colors.primary, theme.colors.background]}
         style={styles.background}
       >
         <Text style={styles.title}>🎰 VÒNG QUAY MAY MẮN</Text>
@@ -190,8 +190,8 @@ const SpinPrizeGame: React.FC = () => {
                   />
                   <SvgText
                     x={getTextPosition(index).x}
-                    y={getTextPosition(index).y - 10}
-                    fontSize={theme.fontSizes.lg}
+                    y={getTextPosition(index).y + 10}
+                    fontSize={theme.fontSizes.lg+5}
                     textAnchor="middle"
                     fill={theme.colors.text}
                     fontWeight="bold"
@@ -206,7 +206,7 @@ const SpinPrizeGame: React.FC = () => {
                     fill={theme.colors.text}
                     fontWeight="bold"
                   >
-                    {prize.name}
+                    {/* {prize.name} */}
                   </SvgText>
                 </React.Fragment>
               ))}
@@ -224,7 +224,7 @@ const SpinPrizeGame: React.FC = () => {
           disabled={isSpinning}
         >
           <LinearGradient
-            colors={isSpinning ? [theme.colors.lightText, '#999'] : [theme.colors.primary, theme.colors.secondary]}
+            colors={isSpinning ? [theme.colors.lightText, '#999'] : [theme.colors.primary, theme.colors.background]}
             style={styles.spinButtonGradient}
           >
             <Text style={styles.spinButtonText}>
@@ -233,24 +233,15 @@ const SpinPrizeGame: React.FC = () => {
           </LinearGradient>
         </TouchableOpacity>
 
-        {selectedPrize && (
+        {/* {selectedPrize && (
           <View style={styles.resultContainer}>
             <Text style={styles.resultText}>
               🎉 Bạn đã trúng: {selectedPrize.name} {selectedPrize.image}
             </Text>
           </View>
-        )}
+        )} */}
 
-        {/* <View style={styles.probabilityContainer}>
-          <Text style={styles.probabilityTitle}>Tỉ lệ trúng thưởng:</Text>
-          {prizes.map((prize) => (
-            <View key={prize.id} style={styles.probabilityItem}>
-              <Text style={styles.probabilityText}>
-                {prize.image} {prize.name}: {(prize.probability * 100).toFixed(0)}%
-              </Text>
-            </View>
-          ))}
-        </View> */}
+        
       </LinearGradient>
     </View>
   );
@@ -299,7 +290,7 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   pointerText: {
-    fontSize: 30,
+    fontSize: 40,
     color: theme.colors.primary,
     textShadowColor: theme.colors.text,
     textShadowOffset: { width: 1, height: 1 },
