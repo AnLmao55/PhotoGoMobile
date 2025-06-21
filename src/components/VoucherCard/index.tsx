@@ -1,12 +1,18 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
     View,
     Text,
     StyleSheet,
     TouchableOpacity,
 } from 'react-native';
+import VoucherModal from '../VoucherModal'; // import your modal
 
 const VoucherCard: React.FC = () => {
+    const [isModalVisible, setModalVisible] = useState(false);
+
+    const openModal = () => setModalVisible(true);
+    const closeModal = () => setModalVisible(false);
+
     return (
         <View style={styles.background}>
             <View style={styles.card}>
@@ -18,10 +24,12 @@ const VoucherCard: React.FC = () => {
                     </View>
                 </View>
 
-                <TouchableOpacity style={styles.viewAllButton}>
+                <TouchableOpacity style={styles.viewAllButton} onPress={openModal}>
                     <Text style={styles.viewAllText}>Xem tất cả →</Text>
                 </TouchableOpacity>
             </View>
+
+            <VoucherModal isVisible={isModalVisible} onClose={closeModal} />
         </View>
     );
 };
@@ -34,11 +42,10 @@ const styles = StyleSheet.create({
         borderRadius: 16,
         padding: 16,
         margin: 16,
-        backgroundColor: '#f66b6b', // flat gradient-ish coral
+        backgroundColor: '#f66b6b',
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-
     },
     leftColumn: {
         flex: 1,

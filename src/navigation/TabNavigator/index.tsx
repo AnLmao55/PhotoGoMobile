@@ -3,6 +3,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import HomeScreen from '../../screens/HomeScreen';
 import { theme } from '../../theme/theme';
+import UserProfileScreen from '../../screens/UserProfileScreen';
 
 // Placeholder screens for other tabs
 const CartScreen: React.FC = () => <></>;
@@ -61,7 +62,7 @@ const TabNavigator: React.FC = () => {
       <Tab.Screen name="Trang chủ" component={HomeScreen} />
       <Tab.Screen name="Giỏ hàng" component={CartScreen} />
       <Tab.Screen name="Yêu thích" component={FavoritesScreen} />
-      <Tab.Screen name="Hồ sơ" component={ProfileScreen} />
+      <Tab.Screen name="Hồ sơ" component={UserProfileScreen} />
     </Tab.Navigator>
   );
 };
