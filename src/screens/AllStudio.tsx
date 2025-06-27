@@ -10,76 +10,84 @@ import {
   TextInput,
   Button,
   ScrollView,
+  ActivityIndicator,
 } from "react-native"
 import { theme } from "../theme/theme"
 import { Ionicons } from "@expo/vector-icons"
 import { useNavigation } from "@react-navigation/native"
 import axios from "axios"
 
-interface Location {
-  id: string
-  address: string
-  district: string
-  ward: string
-  city: string
-  province: string
-  latitude: string
-  longitude: string
-}
+const SERVICE_TYPE_API = `${process.env.EXPO_PUBLIC_API_URL}service-packages/service-type`;
 
-interface Category {
-  id: string
-  name: string
-}
+const sortOptions = [
+  { label: 'Giá', value: 'price' },
+  { label: 'Tên', value: 'name' },
+];
+const sortDirOptions = [
+  { label: 'Tăng dần', value: 'asc' },
+  { label: 'Giảm dần', value: 'desc' },
+];
 
-interface StudioItem {
-  id: string
-  name: string
-  slug: string
-  description: string
-  logo: string
-  banner: string
-  status: string
-  category: Category
-  locations: Location[]
-  averageRating: number
-  reviewCount: number
-  minPrice: number
-  maxPrice: number
-}
+const LOCATION_ENUM = [
+  'TP.HCM',
+  'Hà Nội',
+  'Đà Nẵng',
+  'Cần Thơ',
+  'Hải Phòng',
+  'Nha Trang',
+  'Huế',
+];
 
-const AllStudio: React.FC = () => {
+const AllStudio = () => {
   const navigation = useNavigation()
-  const [studios, setStudios] = useState<StudioItem[]>([])
+  const [studios, setStudios] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [filterVisible, setFilterVisible] = useState(false)
+  const [serviceTypes, setServiceTypes] = useState<any[]>([])
   const [filters, setFilters] = useState({
     name: "",
-    location: "",
     minPrice: "",
     maxPrice: "",
     minRating: "",
     maxRating: "",
-    category: "",
+    location: "",
+    sortBy: 'price',
+    sortDirection: 'asc',
+    current: 1,
+    pageSize: 20,
   })
+  const [search, setSearch] = useState("")
 
   useEffect(() => {
     fetchStudios()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [filters.current, filters.pageSize, filters.name, filters.minPrice, filters.maxPrice, filters.minRating, filters.maxRating, filters.location, filters.sortBy, filters.sortDirection])
 
-  const fetchStudios = async (customFilters = filters) => {
+  useEffect(() => {
+    if (filterVisible && serviceTypes.length === 0) {
+      fetchServiceTypes();
+    }
+  }, [filterVisible]);
+
+  const fetchServiceTypes = async () => {
+    try {
+      const res = await fetch(SERVICE_TYPE_API);
+      const json = await res.json();
+      setServiceTypes(json?.data?.data || []);
+    } catch (e) {
+      setServiceTypes([]);
+    }
+  };
+
+  const fetchStudios = async () => {
     try {
       setLoading(true)
       const params: any = {
-        current: 1,
-        pageSize: 20,
-        sortBy: "distance",
-        sortDirection: "desc",
-        ...customFilters,
+        ...filters,
       }
       // Xóa param rỗng
       Object.keys(params).forEach((key) => {
+        if (Array.isArray(params[key]) && params[key].length === 0) delete params[key]
         if (params[key] === "") delete params[key]
       })
       const response = await axios.get(
@@ -88,18 +96,40 @@ const AllStudio: React.FC = () => {
       )
       setStudios(response.data.data.data)
     } catch (error) {
-      console.error("Error fetching studios:", error)
+      setStudios([])
     } finally {
       setLoading(false)
     }
   }
 
-  const handleApplyFilter = () => {
-    setFilterVisible(false)
-    fetchStudios()
+  // Search handler
+  const handleSearch = () => {
+    setFilters((f) => ({ ...f, name: search, current: 1 }))
   }
 
-  const renderItem = ({ item }: { item: StudioItem }) => (
+  // Sort handler
+  const handleSort = (sortBy: string) => {
+    setFilters((f) => ({ ...f, sortBy, current: 1 }))
+  }
+  const handleSortDir = (sortDirection: string) => {
+    setFilters((f) => ({ ...f, sortDirection, current: 1 }))
+  }
+
+  // Filter handler
+  const handleFilter = (newParams: any) => {
+    setFilters((f) => ({
+      ...f,
+      minPrice: newParams.minPrice,
+      maxPrice: newParams.maxPrice,
+      minRating: newParams.minRating,
+      maxRating: newParams.maxRating,
+      location: newParams.location,
+      current: 1,
+    }))
+    setFilterVisible(false)
+  }
+
+  const renderItem = ({ item }: { item: any }) => (
     <TouchableOpacity
       style={styles.card}
       onPress={() => {
@@ -110,17 +140,14 @@ const AllStudio: React.FC = () => {
       <Text style={styles.name} numberOfLines={1}>
         {item.name}
       </Text>
-
       <Text style={styles.address} numberOfLines={2}>
         {item.locations[0]?.address || "Địa chỉ không có sẵn"}
       </Text>
-
       <View style={styles.ratingContainer}>
         <Ionicons name="star" size={16} color="#FFD700" />
         <Text style={styles.rating}>{item.averageRating?.toFixed(1) ?? "N/A"}</Text>
         <Text style={styles.ratingCount}>({item.reviewCount ?? 0} đánh giá)</Text>
       </View>
-
       <Text style={styles.price}>
         {item.minPrice && item.maxPrice
           ? `${item.minPrice.toLocaleString()}₫ - ${item.maxPrice.toLocaleString()}₫`
@@ -131,138 +158,46 @@ const AllStudio: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        {/* <Text style={styles.sectionTitle}>Thông tin về các Studio</Text> */}
-        <TouchableOpacity onPress={() => setFilterVisible(true)}>
-          <Ionicons name="filter" size={24} color={theme.colors.primary} />
+      {/* Search box */}
+      <View style={styles.searchRow}>
+        <TextInput
+          value={search}
+          onChangeText={setSearch}
+          placeholder="Tìm kiếm studio..."
+          style={styles.searchInput}
+          onSubmitEditing={handleSearch}
+        />
+        <TouchableOpacity style={styles.searchBtn} onPress={handleSearch}>
+          <Ionicons name="search" size={20} color="#fff" />
         </TouchableOpacity>
       </View>
-      {/* Drawer Filter */}
-      <Modal
-        visible={filterVisible}
-        animationType="slide"
-        transparent
-        onRequestClose={() => setFilterVisible(false)}
-      >
-        <View
-          style={{
-            flex: 1,
-            backgroundColor: "rgba(0,0,0,0.3)",
-            justifyContent: "flex-end",
-          }}
-        >
-          <View
-            style={{
-              backgroundColor: "#fff",
-              padding: 20,
-              borderTopLeftRadius: 20,
-              borderTopRightRadius: 20,
-              minHeight: 400,
-              maxHeight: "80%",
-            }}
+      {/* Sort row */}
+      <View style={styles.sortRow}>
+        <Text style={{ marginRight: 8 }}>Sắp xếp:</Text>
+        {sortOptions.map(opt => (
+          <TouchableOpacity
+            key={opt.value}
+            style={[styles.sortBtn, filters.sortBy === opt.value && styles.sortBtnActive]}
+            onPress={() => handleSort(opt.value)}
           >
-            <ScrollView>
-              <Text style={{ fontWeight: "bold", fontSize: 18, marginBottom: 10 }}>
-                Bộ lọc
-              </Text>
-              <Text>Tên Studio</Text>
-              <TextInput
-                value={filters.name}
-                onChangeText={(text) => setFilters((f) => ({ ...f, name: text }))}
-                placeholder="Nhập tên studio"
-                style={styles.input}
-              />
-              <Text>Vị trí</Text>
-              <TextInput
-                value={filters.location}
-                onChangeText={(text) =>
-                  setFilters((f) => ({ ...f, location: text }))
-                }
-                placeholder="Nhập vị trí"
-                style={styles.input}
-              />
-              <Text>Giá tối thiểu</Text>
-              <TextInput
-                value={filters.minPrice}
-                onChangeText={(text) =>
-                  setFilters((f) => ({ ...f, minPrice: text }))
-                }
-                placeholder="Giá từ"
-                keyboardType="numeric"
-                style={styles.input}
-              />
-              <Text>Giá tối đa</Text>
-              <TextInput
-                value={filters.maxPrice}
-                onChangeText={(text) =>
-                  setFilters((f) => ({ ...f, maxPrice: text }))
-                }
-                placeholder="Giá đến"
-                keyboardType="numeric"
-                style={styles.input}
-              />
-              <Text>Điểm đánh giá tối thiểu (1-5)</Text>
-              <View style={{ flexDirection: "row", marginBottom: 10 }}>
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <TouchableOpacity
-                    key={star}
-                    onPress={() => setFilters((f) => ({ ...f, minRating: String(star) }))}
-                  >
-                    <Ionicons
-                      name={
-                        Number(filters.minRating) >= star
-                          ? "star"
-                          : "star-outline"
-                      }
-                      size={28}
-                      color="#FFD700"
-                      style={{ marginRight: 4 }}
-                    />
-                  </TouchableOpacity>
-                ))}
-              </View>
-              <Text>Điểm đánh giá tối đa (1-5)</Text>
-              <View style={{ flexDirection: "row", marginBottom: 10 }}>
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <TouchableOpacity
-                    key={star}
-                    onPress={() => setFilters((f) => ({ ...f, maxRating: String(star) }))}
-                  >
-                    <Ionicons
-                      name={
-                        Number(filters.maxRating) >= star
-                          ? "star"
-                          : "star-outline"
-                      }
-                      size={28}
-                      color="#FFD700"
-                      style={{ marginRight: 4 }}
-                    />
-                  </TouchableOpacity>
-                ))}
-              </View>
-              <Text>Loại dịch vụ</Text>
-              <TextInput
-                value={filters.category}
-                onChangeText={(text) =>
-                  setFilters((f) => ({ ...f, category: text }))
-                }
-                placeholder="Nhập loại dịch vụ"
-                style={styles.input}
-              />
-              <View style={{ marginTop: 10 }}>
-                <Button title="Áp dụng" color={theme.colors.primary} onPress={handleApplyFilter} />
-                <View style={{ height: 8 }} />
-                <Button
-                  title="Đóng"
-                  color="gray"
-                  onPress={() => setFilterVisible(false)}
-                />
-              </View>
-            </ScrollView>
-          </View>
+            <Text style={{ color: filters.sortBy === opt.value ? '#fff' : theme.colors.text }}>{opt.label}</Text>
+          </TouchableOpacity>
+        ))}
+        <View style={styles.sortDirGroup}>
+          {sortDirOptions.map(opt => (
+            <TouchableOpacity
+              key={opt.value}
+              style={[styles.sortBtn, filters.sortDirection === opt.value && styles.sortBtnActive]}
+              onPress={() => handleSortDir(opt.value)}
+            >
+              <Text style={{ color: filters.sortDirection === opt.value ? '#fff' : theme.colors.text }}>{opt.label}</Text>
+            </TouchableOpacity>
+          ))}
         </View>
-      </Modal>
+        <TouchableOpacity onPress={() => setFilterVisible(true)} style={styles.filterIconBtn}>
+          <Ionicons name="filter" size={22} color={theme.colors.primary} />
+        </TouchableOpacity>
+      </View>
       {loading ? (
         <View style={styles.loadingContainer}>
           <Text>Đang tải...</Text>
@@ -278,6 +213,96 @@ const AllStudio: React.FC = () => {
           showsVerticalScrollIndicator={false}
         />
       )}
+      {/* Filter Modal */}
+      <Modal
+        visible={filterVisible}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setFilterVisible(false)}
+      >
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: 'rgba(0,0,0,0.3)',
+            justifyContent: 'flex-end',
+          }}
+        >
+          <View
+            style={{
+              backgroundColor: '#fff',
+              padding: 20,
+              borderTopLeftRadius: 20,
+              borderTopRightRadius: 20,
+              minHeight: 400,
+              maxHeight: '80%',
+            }}
+          >
+            <ScrollView>
+              <Text style={styles.filterTitle}>Bộ lọc studio</Text>
+              <Text>Giá tối thiểu</Text>
+              <TextInput
+                value={filters.minPrice}
+                onChangeText={text => setFilters(f => ({ ...f, minPrice: text }))}
+                placeholder="Giá từ"
+                keyboardType="numeric"
+                style={styles.input}
+              />
+              <Text>Giá tối đa</Text>
+              <TextInput
+                value={filters.maxPrice}
+                onChangeText={text => setFilters(f => ({ ...f, maxPrice: text }))}
+                placeholder="Giá đến"
+                keyboardType="numeric"
+                style={styles.input}
+              />
+              <Text>Điểm đánh giá tối thiểu (1-5)</Text>
+              <View style={{ flexDirection: 'row', marginBottom: 10 }}>
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <TouchableOpacity
+                    key={star}
+                    onPress={() => setFilters((f) => ({ ...f, minRating: String(star) }))}
+                  >
+                    <Ionicons
+                      name={Number(filters.minRating) >= star ? 'star' : 'star-outline'}
+                      size={28}
+                      color="#FFD700"
+                      style={{ marginRight: 4 }}
+                    />
+                  </TouchableOpacity>
+                ))}
+              </View>
+              <Text>Điểm đánh giá tối đa (1-5)</Text>
+              <View style={{ flexDirection: 'row', marginBottom: 10 }}>
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <TouchableOpacity
+                    key={star}
+                    onPress={() => setFilters((f) => ({ ...f, maxRating: String(star) }))}
+                  >
+                    <Ionicons
+                      name={Number(filters.maxRating) >= star ? 'star' : 'star-outline'}
+                      size={28}
+                      color="#FFD700"
+                      style={{ marginRight: 4 }}
+                    />
+                  </TouchableOpacity>
+                ))}
+              </View>
+              <Text>Địa điểm</Text>
+              <TextInput
+                value={filters.location}
+                onChangeText={text => setFilters(f => ({ ...f, location: text }))}
+                placeholder="Nhập địa điểm (ví dụ: Hà Nội, TP.HCM, ...)"
+                style={styles.input}
+              />
+              <View style={{ marginTop: 10 }}>
+                <Button title="Áp dụng" color={theme.colors.primary} onPress={() => handleFilter(filters)} />
+                <View style={{ height: 8 }} />
+                <Button title="Đóng" color="gray" onPress={() => setFilterVisible(false)} />
+              </View>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </View>
   )
 }
@@ -288,25 +313,61 @@ const styles = StyleSheet.create({
     marginHorizontal: theme.spacing.sm,
     flex: 1,
   },
-  header: {
-
-    alignItems: "flex-end",
+  searchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: theme.spacing.md,
     marginBottom: theme.spacing.sm,
   },
-  sectionTitle: {
-    fontSize: theme.fontSizes.lg,
-    fontWeight: "700",
-    color: theme.colors.text,
+  searchInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    padding: 10,
+    fontSize: 16,
+    marginRight: 8,
+  },
+  searchBtn: {
+    backgroundColor: theme.colors.primary,
+    padding: 10,
+    borderRadius: 8,
+  },
+  sortRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: theme.spacing.md,
+    marginBottom: theme.spacing.sm,
+    flexWrap: 'wrap',
+  },
+  sortBtn: {
+    borderWidth: 1,
+    borderColor: theme.colors.primary,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    marginRight: 8,
+    marginBottom: 4,
+  },
+  sortBtnActive: {
+    backgroundColor: theme.colors.primary,
+    borderColor: theme.colors.primary,
+  },
+  filterIconBtn: {
+    marginLeft: 0,
+    marginRight: 8,
+    padding: 6,
+    borderRadius: 8,
+    backgroundColor: '#f2f2f2',
   },
   listContent: {
     paddingHorizontal: theme.spacing.md,
   },
   columnWrapper: {
-    justifyContent: "space-between",
+    justifyContent: 'space-between',
   },
   card: {
-    width: "48%",
+    width: '48%',
     backgroundColor: theme.colors.background,
     borderRadius: 12,
     marginBottom: theme.spacing.md,
@@ -316,18 +377,18 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.2,
     shadowRadius: 2,
-    position: "relative",
+    position: 'relative',
   },
   image: {
-    width: "100%",
+    width: '100%',
     height: 120,
     borderRadius: 8,
     marginBottom: theme.spacing.sm,
-    backgroundColor: "#f0f0f0",
+    backgroundColor: '#f0f0f0',
   },
   name: {
     fontSize: theme.fontSizes.md,
-    fontWeight: "600",
+    fontWeight: '600',
     color: theme.colors.text,
     marginBottom: theme.spacing.xs,
   },
@@ -338,39 +399,63 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   ratingContainer: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   rating: {
     fontSize: theme.fontSizes.sm,
     color: theme.colors.text,
     marginLeft: theme.spacing.xs,
-    fontWeight: "500",
+    fontWeight: '500',
   },
   ratingCount: {
-    fontSize: theme.fontSizes.xs,
+    fontSize: theme.fontSizes.sm,
     color: theme.colors.lightText,
     marginLeft: theme.spacing.xs,
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
     paddingVertical: 40,
   },
   input: {
     borderWidth: 1,
-    borderColor: "#ccc",
+    borderColor: '#ccc',
     borderRadius: 8,
-    marginBottom: 10,
-    padding: 8,
+    padding: 10,
+    marginBottom: 12,
+    fontSize: 16,
+  },
+  typeBtn: {
+    borderWidth: 1,
+    borderColor: theme.colors.primary,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  typeBtnActive: {
+    backgroundColor: theme.colors.primary,
+    borderColor: theme.colors.primary,
+  },
+  filterTitle: {
+    fontSize: theme.fontSizes.lg,
+    fontWeight: 'bold',
+    marginBottom: 16,
+    textAlign: 'center',
   },
   price: {
     fontSize: theme.fontSizes.sm,
     color: theme.colors.primary,
-    fontWeight: "600",
+    fontWeight: '600',
     marginTop: 2,
     marginBottom: theme.spacing.xs,
+  },
+  sortDirGroup: {
+    flexDirection: 'row',
+    marginLeft: 'auto',
   },
 })
 

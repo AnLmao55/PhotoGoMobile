@@ -9,6 +9,8 @@ import TabNavigator from './src/navigation/TabNavigator';
 import SpinPrizeGame from './src/screens/SpinPrize';
 import DetailScreen from './src/screens/DetailScreen';
 import AllStudio from './src/screens/AllStudio';
+import AllServices from './src/screens/AllServices';
+import Booking from './src/screens/Booking';
 
 const Stack = createStackNavigator();
 
@@ -36,6 +38,16 @@ export default function App() {
           <Stack.Screen name='AllStudio' component={AllStudio}
             options={{
               title: 'Tất cả Studio',
+              headerShown: true
+            }} />
+          <Stack.Screen name='AllServices' component={AllServices}
+            options={{
+              title: 'Tất cả dịch vụ',
+              headerShown: true
+            }} />
+          <Stack.Screen name='Booking' component={Booking}
+            options={{
+              title: 'Đặt lịch',
               headerShown: true
             }} />
         </Stack.Navigator>
