@@ -83,33 +83,34 @@ const Studio: React.FC = () => {
     }
   }
 
-const renderItem = ({ item }: { item: StudioItem }) => (
-  <TouchableOpacity
-    style={styles.card}
-    onPress={() => {
-      navigation.navigate("Detail", { slug: item.slug })
-    }}
-  >
-    <Image source={{ uri: item.logo || item.banner }} style={styles.image} />
-    <Text style={styles.name} numberOfLines={1}>
-      {item.name}
-    </Text>
+  const renderItem = ({ item }: { item: StudioItem }) => (
+    <TouchableOpacity
+      style={styles.card}
+      onPress={() => {
+        navigation.navigate("Detail", { slug: item.slug })
+        // alert(`${item.slug}`)
+      }}
+    >
+      <Image source={{ uri: item.logo || item.banner }} style={styles.image} />
+      <Text style={styles.name} numberOfLines={1}>
+        {item.name}
+      </Text>
 
-    <Text style={styles.address} numberOfLines={2}>
-      {item.locations[0]?.address || "Địa chỉ không có sẵn"}
-    </Text>
+      <Text style={styles.address} numberOfLines={2}>
+        {item.locations[0]?.address || "Địa chỉ không có sẵn"}
+      </Text>
 
-    <View style={styles.ratingContainer}>
-      <Ionicons name="star" size={16} color="#FFD700" />
-      <Text style={styles.rating}>{item.averageRating?.toFixed(1) ?? "N/A"}</Text>
-      <Text style={styles.ratingCount}>({item.reviewCount ?? 0} đánh giá)</Text>
-    </View>
+      <View style={styles.ratingContainer}>
+        <Ionicons name="star" size={16} color="#FFD700" />
+        <Text style={styles.rating}>{item.averageRating?.toFixed(1) ?? "N/A"}</Text>
+        <Text style={styles.ratingCount}>({item.reviewCount ?? 0} đánh giá)</Text>
+      </View>
 
-    <Text style={styles.price}>
-      {item.minPrice && item.maxPrice
-        ? `${item.minPrice.toLocaleString()}₫ - ${item.maxPrice.toLocaleString()}₫`
-        : "Giá: Liên hệ"}
-    </Text>
+      <Text style={styles.price}>
+        {item.minPrice && item.maxPrice
+          ? `${item.minPrice.toLocaleString()}₫ - ${item.maxPrice.toLocaleString()}₫`
+          : "Giá: Liên hệ"}
+      </Text>
 
       <TouchableOpacity
         style={styles.favoriteIcon}

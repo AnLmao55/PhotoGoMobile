@@ -18,18 +18,38 @@ import ServiceList from '../components/ServiceLIst';
 import WorkList from '../components/WorkList';
 import ReviewList from '../components/ReviewItem';
 import ScreenWithStickyButton from '../components/ScreenWithStickyButton';
-
+import { useEffect, useState } from 'react';
+import { useRoute } from '@react-navigation/native';
+import axios from 'axios';
 const DetailScreen: React.FC = () => {
+    const route = useRoute();
+    const { slug } = route.params as { slug: string };
+    const [studio, setStudio] = useState<any>({}); // Adjust based on your API shape
+
+    useEffect(() => {
+        fetchStudioInfo();
+    }, []);
+
+    const fetchStudioInfo = async () => {
+        try {
+            const response = await axios.get(`${process.env.EXPO_PUBLIC_API_URL}/vendors/slug/${slug}`);
+            // console.log("✅ Studio response:", response.data.data);
+            setStudio(response.data.data);
+        } catch (error) {
+            // console.error("❌ Failed to fetch studio info:", error);
+        }
+    };
+
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.contentContainer}>
                 <ScrollView contentContainerStyle={styles.scrollContent}>
-                    <Carousel />
-                    <StudioInfoCard />
+                    <Carousel studio={studio} />
+                    <StudioInfoCard studio={studio} />
                     <VoucherCard />
-                    <IntroductionSection />
+                    <IntroductionSection studio={studio} />
                     <VoucherList />
-                    <ServiceList />
+                    <ServiceList studio={studio} />
                     <WorkList />
                     <ReviewList />
                 </ScrollView>
