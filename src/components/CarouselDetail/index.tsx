@@ -24,7 +24,10 @@ const images: CarouselItem[] = [
     { id: '3', uri: null },
 ];
 
-const Carousel: React.FC = () => {
+type Props = {
+    studio: any;
+};
+const Carousel: React.FC<Props> = ({ studio }) => {
     const [currentIndex, setCurrentIndex] = useState<number>(0);
     const flatListRef = useRef<FlatList<CarouselItem>>(null);
 

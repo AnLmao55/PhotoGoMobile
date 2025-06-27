@@ -1,50 +1,61 @@
 import React from 'react';
-import { View, Text, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
+import {
+    View,
+    Text,
+    StyleSheet,
+    Dimensions,
+    TouchableOpacity,
+    Image // ✅ You need to import this
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-const services = [
-    {
-        id: '1',
-        name: 'Gói Chụp Ảnh Cưới Cơ Bản',
-        price: '5,000,000đ',
-        duration: '4 giờ',
-    },
-    {
-        id: '2',
-        name: 'Gói Chụp Ảnh Gia Đình',
-        price: '2,800,000đ',
-        duration: '3 giờ',
-    },
-];
+type Props = {
+    studio: any;
+};
 
-const ServiceItem: React.FC<{ service: typeof services[0] }> = ({ service }) => {
+type ServiceType = {
+    id: string;
+    name: string;
+    price: string;
+    duration?: string;
+    image?: string;
+};
+
+const ServiceItem: React.FC<{ service: ServiceType }> = ({ service }) => {
     return (
         <View style={styles.serviceCard}>
             <View style={styles.serviceImage}>
-                <Ionicons name="image" size={40} color="#ccc" />
+                {service.image ? (
+                    <Image source={{ uri: service.image }} style={styles.imageStyle} />
+                ) : (
+                    <Ionicons name="image-outline" size={40} color="#ccc" />
+                )}
             </View>
             <View style={styles.serviceInfo}>
                 <Text style={styles.serviceName}>{service.name}</Text>
-                <Text style={styles.servicePrice}>{service.price}</Text>
-                <View style={styles.serviceDurationRow}>
-                    <Ionicons name="time-outline" size={16} color="#999" />
-                    <Text style={styles.serviceDuration}>{service.duration}</Text>
-                </View>
+                <Text style={styles.servicePrice}>{Number(service.price).toLocaleString()}đ</Text>
+                {service.duration && (
+                    <View style={styles.serviceDurationRow}>
+                        <Ionicons name="time-outline" size={16} color="#999" />
+                        <Text style={styles.serviceDuration}>{service.duration}</Text>
+                    </View>
+                )}
             </View>
         </View>
     );
 };
 
-const ServiceList: React.FC = () => {
+const ServiceList: React.FC<Props> = ({ studio }) => {
     return (
         <View style={styles.background}>
             <View style={styles.container}>
                 <View style={styles.titleRow}>
                     <Text style={styles.title}>Gói dịch vụ</Text>
                 </View>
-                {services.map(service => (
-                    <ServiceItem key={service.id} service={service} />
-                ))}
+                {Array.isArray(studio.servicePackages) &&
+                    studio.servicePackages.map((service: ServiceType) => (
+                        <ServiceItem key={service.id} service={service} />
+                    ))}
             </View>
         </View>
     );
@@ -87,6 +98,11 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: 12,
+    },
+    imageStyle: {
+        width: 60,
+        height: 60,
+        borderRadius: 8,
     },
     serviceInfo: {
         flex: 1,
