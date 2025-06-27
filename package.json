@@ -22,7 +22,7 @@
     "axios": "^1.10.0",
     "expo": "~53.0.9",
     "expo-auth-session": "~6.1.5",
-    "expo-dev-client": "~5.2.0",
+    "expo-dev-client": "~5.2.1",
     "expo-linear-gradient": "^14.1.4",
     "expo-location": "~18.1.5",
     "expo-secure-store": "^14.2.3",

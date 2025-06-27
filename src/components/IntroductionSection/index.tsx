@@ -5,8 +5,10 @@ import {
     StyleSheet,
     TouchableOpacity,
 } from 'react-native';
-
-const IntroductionSection: React.FC = () => {
+type Props = {
+    studio: any;
+};
+const IntroductionSection: React.FC<Props> = ({ studio }) => {
     const [expanded, setExpanded] = useState(false);
 
     const fullText =
@@ -20,7 +22,7 @@ const IntroductionSection: React.FC = () => {
                     style={styles.description}
                     numberOfLines={expanded ? undefined : 2}
                 >
-                    {fullText}
+                    {studio.description}
                 </Text>
                 <TouchableOpacity onPress={() => setExpanded(!expanded)}>
                     <Text style={styles.toggleText}>

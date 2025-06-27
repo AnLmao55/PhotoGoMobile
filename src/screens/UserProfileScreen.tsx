@@ -10,7 +10,7 @@ function UserProfileScreen() {
             <View style={styles.contentContainer}>
                 <ScrollView contentContainerStyle={styles.scrollContent}>
                     <UserProfileCard
-                        name="Nguyễn Thành"
+                        name="Nguyễn Thành Công"
                         email="nguyenthanh@example.com"
                         isVIP={true}
                     />
