@@ -38,8 +38,9 @@ const HomeScreen: React.FC = () => {
         autoPlay={true}
         interval={3000}
       />
-      <Services />   
       <Studio/>
+      <Services />   
+      
       <MakeupArtists/>
       <Review/>
     </View>

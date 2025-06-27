@@ -18,6 +18,12 @@ import ServiceList from '../components/ServiceLIst';
 import WorkList from '../components/WorkList';
 import ReviewList from '../components/ReviewItem';
 import ScreenWithStickyButton from '../components/ScreenWithStickyButton';
+
+import { useNavigation } from '@react-navigation/native';
+
+const DetailScreen: React.FC = () => {
+    const navigation = useNavigation();
+
 import { useEffect, useState } from 'react';
 import { useRoute } from '@react-navigation/native';
 import axios from 'axios';
@@ -40,6 +46,7 @@ const DetailScreen: React.FC = () => {
         }
     };
 
+
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.contentContainer}>
@@ -55,7 +62,7 @@ const DetailScreen: React.FC = () => {
                 </ScrollView>
 
                 <View style={styles.stickyButtonContainer}>
-                    <TouchableOpacity style={styles.stickyButton}>
+                    <TouchableOpacity style={styles.stickyButton} onPress={() => navigation.navigate('Booking')}>
                         <Ionicons name="calendar-outline" size={20} color="white" style={{ marginRight: 8 }} />
                         <Text style={styles.stickyButtonText}>Đặt lịch ngay</Text>
                     </TouchableOpacity>
