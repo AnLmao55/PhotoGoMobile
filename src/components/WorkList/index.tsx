@@ -1,39 +1,63 @@
-import React from 'react';
-import { View, Text, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import React, { useState, useMemo } from 'react';
+import {
+    View,
+    Text,
+    StyleSheet,
+    Dimensions,
+    TouchableOpacity,
+    Image,
+    Modal,
+    Pressable
+} from 'react-native';
 
-const works = [
-    { id: '1' },
-    { id: '2' },
-    { id: '3' },
-    { id: '4' },
+const WorkList: React.FC<{ studio: any }> = ({ studio }) => {
+    const [showAll, setShowAll] = useState(false);
+    const [previewVisible, setPreviewVisible] = useState(false);
+    const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
-];
+    const allImages = useMemo(() => {
+        if (!studio?.servicePackages) return [];
+        return studio.servicePackages.flatMap(pkg =>
+            pkg.serviceConcepts?.flatMap(concept => concept.images || [])
+        );
+    }, [studio]);
 
-const WorkItem: React.FC = () => {
-    return (
-        <View style={styles.workItem}>
-            <Ionicons name="image" size={40} color="#ccc" />
-        </View>
-    );
-};
+    const imagesToShow = showAll ? allImages : allImages.slice(0, 6);
 
-const WorkList: React.FC = () => {
+    const handleImagePress = (uri: string) => {
+        setSelectedImage(uri);
+        setPreviewVisible(true);
+    };
+
     return (
         <View style={styles.background}>
             <View style={styles.container}>
                 <View style={styles.headerRow}>
                     <Text style={styles.title}>Tác phẩm</Text>
-                    <TouchableOpacity>
-                        <Text style={styles.viewAll}>Xem tất cả</Text>
-                    </TouchableOpacity>
+                    {allImages.length > 6 && !showAll && (
+                        <TouchableOpacity onPress={() => setShowAll(true)}>
+                            <Text style={styles.viewAll}>Xem tất cả</Text>
+                        </TouchableOpacity>
+                    )}
                 </View>
+
                 <View style={styles.gridContainer}>
-                    {works.map((item) => (
-                        <WorkItem key={item.id} />
+                    {imagesToShow.map((url, index) => (
+                        <TouchableOpacity key={index} onPress={() => handleImagePress(url)}>
+                            <View style={styles.workItem}>
+                                <Image source={{ uri: url }} style={styles.image} />
+                            </View>
+                        </TouchableOpacity>
                     ))}
                 </View>
             </View>
+
+            {/* Image Preview Modal */}
+            <Modal visible={previewVisible} transparent={true}>
+                <Pressable style={styles.modalBackground} onPress={() => setPreviewVisible(false)}>
+                    <Image source={{ uri: selectedImage ?? '' }} style={styles.fullImage} />
+                </Pressable>
+            </Modal>
         </View>
     );
 };
@@ -66,17 +90,32 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         flexDirection: 'row',
         flexWrap: 'wrap',
-        justifyContent: 'space-between', // ONLY CHANGE THIS
+        justifyContent: 'space-between',
     },
     workItem: {
         width: itemSize,
         height: itemSize,
-        backgroundColor: '#EAEAEA',
         borderRadius: 16,
+        overflow: 'hidden',
+        backgroundColor: '#EEE',
+        marginBottom: 16,
+    },
+    image: {
+        width: '100%',
+        height: '100%',
+        resizeMode: 'cover',
+    },
+    modalBackground: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.9)',
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: 16,
-        marginRight: 16, // ADD MARGIN RIGHT for spacing
+    },
+    fullImage: {
+        width: '90%',
+        height: '70%',
+        resizeMode: 'contain',
+        borderRadius: 12,
     },
 });
 

@@ -1,4 +1,11 @@
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from "react-native"
+import React, { useState } from "react"
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  ScrollView,
+  StyleSheet,
+} from "react-native"
 import type { StepProps } from "../../../types/payment"
 
 const theme = {
@@ -19,7 +26,9 @@ const CheckBox = ({ checked, onPress }: { checked: boolean; onPress: () => void 
   </TouchableOpacity>
 )
 
-export default function Step1({ formData, onUpdateFormData, onNext, isLoading }: StepProps) {
+export default function Step1({ formData, onUpdateFormData, onNext, isLoading, selectedService }: StepProps) {
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+
   const formatPrice = (price: number) => {
     return price.toLocaleString("vi-VN") + "đ"
   }
@@ -47,45 +56,81 @@ export default function Step1({ formData, onUpdateFormData, onNext, isLoading }:
     return total
   }
 
+  const selectedConcept = selectedService?.serviceConcepts?.find(
+    (c: any) => c.id === formData.selectedConceptId
+  )
+
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <View style={styles.content}>
-        {/* Package Info */}
-        <View style={styles.card}>
-          <View style={styles.packageInfo}>
-            <View style={styles.packageIcon}>
-              <Text style={styles.packageIconText}>📸</Text>
-            </View>
-            <View style={styles.packageDetails}>
-              <Text style={styles.packageTitle}>Gói chụp ảnh cưới cơ bản</Text>
-              <Text style={styles.packageSubtitle}>Studio Ánh Dương</Text>
-              <View style={styles.packageRating}>
-                <Text style={styles.star}>⭐</Text>
-                <Text style={styles.ratingText}>4 giờ</Text>
+        {/* Concept Selector */}
+        {selectedService?.serviceConcepts?.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Chọn concept</Text>
+
+            <TouchableOpacity
+              onPress={() => setIsDropdownOpen(!isDropdownOpen)}
+              style={styles.dropdownHeader}
+            >
+              <Text style={styles.dropdownText}>
+                {selectedConcept?.name || "Chọn một concept"}
+              </Text>
+            </TouchableOpacity>
+
+            {isDropdownOpen && (
+              <View style={styles.dropdownList}>
+                {selectedService.serviceConcepts.map((concept: any) => (
+                  <TouchableOpacity
+                    key={concept.id}
+                    onPress={() => {
+                      setIsDropdownOpen(false)
+                      onUpdateFormData({ selectedConceptId: concept.id })
+                    }}
+                    style={styles.dropdownItem}
+                  >
+                    <Text>{concept.name}</Text>
+                  </TouchableOpacity>
+                ))}
               </View>
-              <View style={styles.packagePricing}>
-                <Text style={styles.packageLabel}>Chụp ảnh</Text>
-                <Text style={[styles.packagePrice, { color: theme.colors.primary }]}>{formatPrice(5000000)}</Text>
+            )}
+          </View>
+        )}
+        {selectedConcept && (
+          <View style={styles.card}>
+            <View style={styles.packageInfo}>
+              <View style={styles.packageIcon}>
+                <Text style={styles.packageIconText}>📸</Text>
+              </View>
+              <View style={styles.packageDetails}>
+                <Text style={styles.packageTitle}>{selectedService.name}</Text>
+                <Text style={styles.packageSubtitle}>{selectedConcept.name}</Text>
+                <View style={styles.packageRating}>
+                  <Text style={styles.star}>⭐</Text>
+                  <Text style={styles.ratingText}>4 giờ</Text>
+                </View>
+                <View style={styles.packagePricing}>
+                  <Text style={styles.packageLabel}>Chụp ảnh</Text>
+                  <Text style={[styles.packagePrice, { color: theme.colors.primary }]}>{formatPrice(selectedConcept.price)}</Text>
+                </View>
+              </View>
+            </View>
+
+            <View style={styles.packageMeta}>
+              <View style={styles.metaItem}>
+                <Text style={styles.metaIcon}>📅</Text>
+                <Text style={styles.metaText}>15/08/2025</Text>
+              </View>
+              <View style={styles.metaItem}>
+                <Text style={styles.metaIcon}>🕘</Text>
+                <Text style={styles.metaText}>09:00</Text>
+              </View>
+              <View style={styles.metaItem}>
+                <Text style={styles.metaIcon}>📍</Text>
+                <Text style={styles.metaText}>123 Nguyễn Huệ, Quận 1, TP. Hồ Chí Minh</Text>
               </View>
             </View>
           </View>
-
-          <View style={styles.packageMeta}>
-            <View style={styles.metaItem}>
-              <Text style={styles.metaIcon}>📅</Text>
-              <Text style={styles.metaText}>15/08/2025</Text>
-            </View>
-            <View style={styles.metaItem}>
-              <Text style={styles.metaIcon}>🕘</Text>
-              <Text style={styles.metaText}>09:00</Text>
-            </View>
-            <View style={styles.metaItem}>
-              <Text style={styles.metaIcon}>📍</Text>
-              <Text style={styles.metaText}>123 Nguyễn Huệ, Quận 1, TP. Hồ Chí Minh</Text>
-            </View>
-          </View>
-        </View>
-
+        )}
         {/* Additional Services */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Dịch vụ bổ sung</Text>
@@ -94,26 +139,30 @@ export default function Step1({ formData, onUpdateFormData, onNext, isLoading }:
               <CheckBox checked={formData.selectedServices.premium} onPress={() => handleServiceToggle("premium")} />
               <View style={styles.serviceDetails}>
                 <Text style={styles.serviceName}>Trang điểm cô dâu cao cấp</Text>
-                <Text style={[styles.servicePrice, { color: theme.colors.primary }]}>{formatPrice(1500000)}</Text>
+                <Text style={[styles.servicePrice, { color: theme.colors.primary }]}>
+                  {formatPrice(1500000)}
+                </Text>
               </View>
             </View>
+            {/* Package Info */}
 
             <View style={styles.serviceItem}>
               <CheckBox checked={formData.selectedServices.album} onPress={() => handleServiceToggle("album")} />
               <View style={styles.serviceDetails}>
                 <Text style={styles.serviceName}>Album ảnh cao cấp thêm</Text>
-                <Text style={[styles.servicePrice, { color: theme.colors.primary }]}>{formatPrice(1200000)}</Text>
+                <Text style={[styles.servicePrice, { color: theme.colors.primary }]}>
+                  {formatPrice(1200000)}
+                </Text>
               </View>
             </View>
 
             <View style={styles.serviceItem}>
-              <CheckBox
-                checked={formData.selectedServices.extraHour}
-                onPress={() => handleServiceToggle("extraHour")}
-              />
+              <CheckBox checked={formData.selectedServices.extraHour} onPress={() => handleServiceToggle("extraHour")} />
               <View style={styles.serviceDetails}>
                 <Text style={styles.serviceName}>Chụp thêm 1 giờ</Text>
-                <Text style={[styles.servicePrice, { color: theme.colors.primary }]}>{formatPrice(800000)}</Text>
+                <Text style={[styles.servicePrice, { color: theme.colors.primary }]}>
+                  {formatPrice(800000)}
+                </Text>
               </View>
             </View>
           </View>
@@ -177,6 +226,9 @@ const styles = StyleSheet.create({
   content: {
     padding: 16,
     gap: 24,
+  },
+  section: {
+    marginBottom: 24,
   },
   card: {
     borderWidth: 1,
@@ -252,12 +304,32 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#6b7280",
   },
-  section: {
-    gap: 12,
-  },
   sectionTitle: {
     fontWeight: "600",
     fontSize: 16,
+    marginBottom: 8,
+  },
+  dropdownHeader: {
+    padding: 12,
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 6,
+    backgroundColor: "#fff",
+  },
+  dropdownText: {
+    fontSize: 14,
+  },
+  dropdownList: {
+    marginTop: 4,
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 6,
+    backgroundColor: "#fff",
+  },
+  dropdownItem: {
+    padding: 12,
+    borderBottomWidth: 1,
+    borderColor: "#eee",
   },
   serviceList: {
     gap: 12,

@@ -7,6 +7,7 @@ import Step2 from "../components/BookingStepForm/Step2"
 import Step3 from "../components/BookingStepForm/Step3"
 import type { PaymentFormData } from "../types/payment"
 import { paymentApi } from "../services/paymentApi"
+import { useRoute } from "@react-navigation/native";
 
 
 const theme = {
@@ -20,6 +21,8 @@ const theme = {
 }
 
 export default function Booking() {
+    const route = useRoute();
+    const { selectedService } = route.params || {};
     const [currentStep, setCurrentStep] = useState(1)
     const [isLoading, setIsLoading] = useState(false)
     const [formData, setFormData] = useState<PaymentFormData>({
@@ -123,7 +126,7 @@ export default function Booking() {
 
         switch (currentStep) {
             case 1:
-                return <Step1 {...commonProps} onNext={handleStep1Next} />
+                return <Step1 {...commonProps} onNext={handleStep1Next} selectedService={selectedService} />
             case 2:
                 return <Step2 {...commonProps} onNext={handleStep2Next} />
             case 3:
@@ -205,7 +208,7 @@ export default function Booking() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        
+
     },
     wrapper: {
         minWidth: 400,

@@ -19,15 +19,16 @@ import WorkList from '../components/WorkList';
 import ReviewList from '../components/ReviewItem';
 import ScreenWithStickyButton from '../components/ScreenWithStickyButton';
 
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 
-const DetailScreen: React.FC = () => {
-    const navigation = useNavigation();
+
+
 
 import { useEffect, useState } from 'react';
-import { useRoute } from '@react-navigation/native';
+
 import axios from 'axios';
 const DetailScreen: React.FC = () => {
+    const navigation = useNavigation();
     const route = useRoute();
     const { slug } = route.params as { slug: string };
     const [studio, setStudio] = useState<any>({}); // Adjust based on your API shape
@@ -39,7 +40,7 @@ const DetailScreen: React.FC = () => {
     const fetchStudioInfo = async () => {
         try {
             const response = await axios.get(`${process.env.EXPO_PUBLIC_API_URL}/vendors/slug/${slug}`);
-            // console.log("✅ Studio response:", response.data.data);
+            console.log("✅ Studio response:", response.data.data);
             setStudio(response.data.data);
         } catch (error) {
             // console.error("❌ Failed to fetch studio info:", error);
@@ -57,12 +58,12 @@ const DetailScreen: React.FC = () => {
                     <IntroductionSection studio={studio} />
                     <VoucherList />
                     <ServiceList studio={studio} />
-                    <WorkList />
+                    <WorkList studio={studio} />
                     <ReviewList />
                 </ScrollView>
 
                 <View style={styles.stickyButtonContainer}>
-                    <TouchableOpacity style={styles.stickyButton} onPress={() => navigation.navigate('Booking')}>
+                    <TouchableOpacity style={styles.stickyButton} onPress={() => navigation.navigate('Booking', { studio })}>
                         <Ionicons name="calendar-outline" size={20} color="white" style={{ marginRight: 8 }} />
                         <Text style={styles.stickyButtonText}>Đặt lịch ngay</Text>
                     </TouchableOpacity>

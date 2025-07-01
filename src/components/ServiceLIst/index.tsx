@@ -8,7 +8,7 @@ import {
     Image // ✅ You need to import this
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-
+import { useNavigation } from '@react-navigation/native';
 type Props = {
     studio: any;
 };
@@ -16,14 +16,18 @@ type Props = {
 type ServiceType = {
     id: string;
     name: string;
-    price: string;
-    duration?: string;
+
+
     image?: string;
 };
 
 const ServiceItem: React.FC<{ service: ServiceType }> = ({ service }) => {
+    const navigation = useNavigation();
+    const handlePress = () => {
+        navigation.navigate("Booking", { selectedService: service });
+    };
     return (
-        <View style={styles.serviceCard}>
+        <TouchableOpacity onPress={handlePress} style={styles.serviceCard}>
             <View style={styles.serviceImage}>
                 {service.image ? (
                     <Image source={{ uri: service.image }} style={styles.imageStyle} />
@@ -33,15 +37,15 @@ const ServiceItem: React.FC<{ service: ServiceType }> = ({ service }) => {
             </View>
             <View style={styles.serviceInfo}>
                 <Text style={styles.serviceName}>{service.name}</Text>
-                <Text style={styles.servicePrice}>{Number(service.price).toLocaleString()}đ</Text>
-                {service.duration && (
+                {/* <Text style={styles.servicePrice}>{service.price}đ</Text> */}
+                {/* {service.duration && (
                     <View style={styles.serviceDurationRow}>
                         <Ionicons name="time-outline" size={16} color="#999" />
                         <Text style={styles.serviceDuration}>{service.duration}</Text>
                     </View>
-                )}
+                )} */}
             </View>
-        </View>
+        </TouchableOpacity>
     );
 };
 
