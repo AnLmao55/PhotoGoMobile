@@ -1,13 +1,18 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { View, Text, TouchableOpacity, StyleSheet, Alert } from "react-native"
 import Step1 from "../components/BookingStepForm/Step1"
 import Step2 from "../components/BookingStepForm/Step2"
 import Step3 from "../components/BookingStepForm/Step3"
-import type { PaymentFormData } from "../types/payment"
+import Step4 from "../components/BookingStepForm/Step4"
+import type { PaymentFormData, VendorData } from "../types/payment"
 import { paymentApi } from "../services/paymentApi"
-import { useRoute } from "@react-navigation/native";
+
+
+
+import { RouteProp } from "@react-navigation/native"
+
 
 
 const theme = {
@@ -20,11 +25,17 @@ const theme = {
     },
 }
 
-export default function Booking() {
-    const route = useRoute();
-    const { selectedService } = route.params || {};
+
+
+
+export default function Booking({ route }: { route: RouteProp<any, any> }) {
+    const { slug } = route.params as { slug: string }
+    console.log(slug)
+
     const [currentStep, setCurrentStep] = useState(1)
     const [isLoading, setIsLoading] = useState(false)
+    const [vendorData, setVendorData] = useState<VendorData | null>(null)
+    const [isLoadingVendor, setIsLoadingVendor] = useState(true)
     const [formData, setFormData] = useState<PaymentFormData>({
         selectedServices: {
             premium: true,
@@ -50,14 +61,35 @@ export default function Booking() {
 
     const steps = [
         { number: 1, title: "Đơn hàng" },
-        { number: 2, title: "Thông tin" },
-        { number: 3, title: "Thanh toán" },
+        { number: 2, title: "Ngày giờ" },
+        { number: 3, title: "Thông tin" },
+        { number: 4, title: "Thanh toán" },
     ]
+
+
+
+    useEffect(() => {
+        const fetchVendorData = async () => {
+            try {
+                setIsLoadingVendor(true)
+                const data = await paymentApi.fetchVendorBySlug(slug)
+                setVendorData(data)
+            } catch (error) {
+                console.error("Error fetching vendor data:", error)
+                Alert.alert("Lỗi", "Không thể tải thông tin nhà cung cấp. Vui lòng thử lại.")
+            } finally {
+                setIsLoadingVendor(false)
+            }
+        }
+
+        if (slug) {
+            fetchVendorData()
+        }
+    }, [slug])
 
     const updateFormData = (data: Partial<PaymentFormData>) => {
         setFormData((prev) => ({ ...prev, ...data }))
     }
-
     const handleStep1Next = async () => {
         setIsLoading(true)
         try {
@@ -72,11 +104,28 @@ export default function Booking() {
     }
 
     const handleStep2Next = async () => {
+        if (!formData.bookingDateTime) {
+            Alert.alert("Lỗi", "Vui lòng chọn ngày và giờ")
+            return
+        }
+
+        setIsLoading(true)
+        try {
+            // Validate date/time availability
+            setCurrentStep(3)
+        } catch (error) {
+            Alert.alert("Lỗi", "Không thể xác thực thời gian. Vui lòng thử lại.")
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
+    const handleStep3Next = async () => {
         setIsLoading(true)
         try {
             // Save customer information
             await paymentApi.saveCustomerInfo(formData.customerInfo)
-            setCurrentStep(3)
+            setCurrentStep(4)
         } catch (error) {
             Alert.alert("Lỗi", "Không thể lưu thông tin khách hàng. Vui lòng thử lại.")
         } finally {
@@ -84,7 +133,7 @@ export default function Booking() {
         }
     }
 
-    const handleStep3Next = async () => {
+    const handleStep4Next = async () => {
         setIsLoading(true)
         try {
             // Process payment
@@ -103,7 +152,7 @@ export default function Booking() {
                     },
                 ],
             )
-        } catch (error) {
+        } catch (error: any) {
             Alert.alert("Lỗi thanh toán", error.message || "Có lỗi xảy ra khi xử lý thanh toán")
         } finally {
             setIsLoading(false)
@@ -122,6 +171,7 @@ export default function Booking() {
             onUpdateFormData: updateFormData,
             onBack: handleBack,
             isLoading,
+            vendorData: vendorData || undefined,
         }
 
         switch (currentStep) {
@@ -131,9 +181,21 @@ export default function Booking() {
                 return <Step2 {...commonProps} onNext={handleStep2Next} />
             case 3:
                 return <Step3 {...commonProps} onNext={handleStep3Next} />
+            case 4:
+                return <Step4 {...commonProps} onNext={handleStep4Next} />
             default:
                 return <Step1 {...commonProps} onNext={handleStep1Next} />
         }
+    }
+
+    if (isLoadingVendor) {
+        return (
+            <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+                <View style={styles.loadingContainer}>
+                    <Text style={styles.loadingText}>Đang tải thông tin...</Text>
+                </View>
+            </View>
+        )
     }
 
     return (
@@ -276,7 +338,7 @@ const styles = StyleSheet.create({
         textAlign: "center",
     },
     stepLine: {
-        width: 88,
+        width: 40,
         height: 2,
         marginHorizontal: 8,
         marginBottom: 20,

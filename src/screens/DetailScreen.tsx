@@ -12,21 +12,21 @@ import Carousel from '../components/CarouselDetail';
 import StudioInfoCard from '../components/StudioInfoCard';
 import VoucherCard from '../components/VoucherCard';
 import IntroductionSection from '../components/IntroductionSection';
-
 import VoucherList from '../components/VoucherCard2';
 import ServiceList from '../components/ServiceLIst';
 import WorkList from '../components/WorkList';
 import ReviewList from '../components/ReviewItem';
 import ScreenWithStickyButton from '../components/ScreenWithStickyButton';
 
+
+
+
+
 import { useNavigation, useRoute } from '@react-navigation/native';
-
-
-
-
-import { useEffect, useState } from 'react';
-
+import { useEffect, useState, } from 'react';
 import axios from 'axios';
+
+
 const DetailScreen: React.FC = () => {
     const navigation = useNavigation();
     const route = useRoute();
@@ -63,10 +63,17 @@ const DetailScreen: React.FC = () => {
                 </ScrollView>
 
                 <View style={styles.stickyButtonContainer}>
-                    <TouchableOpacity style={styles.stickyButton} onPress={() => navigation.navigate('Booking', { studio })}>
+
+
+                    <TouchableOpacity
+                        style={styles.stickyButton}
+                        onPress={() => navigation.navigate('Booking', { slug })}
+                    >
+
                         <Ionicons name="calendar-outline" size={20} color="white" style={{ marginRight: 8 }} />
                         <Text style={styles.stickyButtonText}>Đặt lịch ngay</Text>
                     </TouchableOpacity>
+
                 </View>
             </View>
         </SafeAreaView>
