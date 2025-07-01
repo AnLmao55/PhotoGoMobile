@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from "react-native"
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image } from "react-native"
 import type { StepProps } from "../../../types/payment"
 
 const theme = {
@@ -19,12 +19,18 @@ const CheckBox = ({ checked, onPress }: { checked: boolean; onPress: () => void 
   </TouchableOpacity>
 )
 
-export default function Step1({ formData, onUpdateFormData, onNext, isLoading }: StepProps) {
+const RadioButton = ({ selected, onPress }: { selected: boolean; onPress: () => void }) => (
+  <TouchableOpacity onPress={onPress} style={styles.radioButton}>
+    <View style={[styles.radioButtonInner, selected && styles.radioButtonSelected]}>
+      {selected && <View style={styles.radioButtonDot} />}
+    </View>
+  </TouchableOpacity>
+)
+
+export default function Step1({ formData, onUpdateFormData, onNext, isLoading, vendorData }: StepProps) {
   const formatPrice = (price: number) => {
     return price.toLocaleString("vi-VN") + "đ"
   }
-
-  const basePrice = 6500000
 
   const handleServiceToggle = (service: keyof typeof formData.selectedServices) => {
     onUpdateFormData({
@@ -39,131 +45,257 @@ export default function Step1({ formData, onUpdateFormData, onNext, isLoading }:
     onUpdateFormData({ voucher })
   }
 
+  const handleConceptSelect = (concept: any) => {
+    onUpdateFormData({ selectedConcept: concept })
+  }
+
   const calculateTotal = () => {
-    let total = basePrice
+    let total = formData.selectedConcept ? Number.parseFloat(formData.selectedConcept.price) : 0
     if (formData.selectedServices.premium) total += 1500000
     if (formData.selectedServices.album) total += 1200000
     if (formData.selectedServices.extraHour) total += 800000
     return total
   }
 
+  // Get all concepts from all service packages
+  const getAllConcepts = () => {
+    if (!vendorData) return []
+    const concepts: any[] = []
+    vendorData.servicePackages.forEach((pkg) => {
+      pkg.serviceConcepts.forEach((concept) => {
+        concepts.push({
+          ...concept,
+          packageName: pkg.name,
+          packageId: pkg.id,
+        })
+      })
+    })
+    return concepts
+  }
+
+  const allConcepts = getAllConcepts()
+
+  if (!vendorData) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text style={styles.loadingText}>Đang tải thông tin...</Text>
+      </View>
+    )
+  }
+
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <View style={styles.content}>
-        {/* Package Info */}
+        {/* Vendor Info */}
         <View style={styles.card}>
-          <View style={styles.packageInfo}>
-            <View style={styles.packageIcon}>
-              <Text style={styles.packageIconText}>📸</Text>
-            </View>
-            <View style={styles.packageDetails}>
-              <Text style={styles.packageTitle}>Gói chụp ảnh cưới cơ bản</Text>
-              <Text style={styles.packageSubtitle}>Studio Ánh Dương</Text>
-              <View style={styles.packageRating}>
+          <View style={styles.vendorInfo}>
+            <Image source={{ uri: vendorData.logo }} style={styles.vendorLogo} />
+            <View style={styles.vendorDetails}>
+              <Text style={styles.vendorName}>{vendorData.name}</Text>
+              <Text style={styles.vendorCategory}>{vendorData.category.name}</Text>
+              <View style={styles.vendorRating}>
                 <Text style={styles.star}>⭐</Text>
-                <Text style={styles.ratingText}>4 giờ</Text>
+                <Text style={styles.ratingText}>{vendorData.averageRating.toFixed(1)}</Text>
               </View>
-              <View style={styles.packagePricing}>
-                <Text style={styles.packageLabel}>Chụp ảnh</Text>
-                <Text style={[styles.packagePrice, { color: theme.colors.primary }]}>{formatPrice(5000000)}</Text>
-              </View>
-            </View>
-          </View>
-
-          <View style={styles.packageMeta}>
-            <View style={styles.metaItem}>
-              <Text style={styles.metaIcon}>📅</Text>
-              <Text style={styles.metaText}>15/08/2025</Text>
-            </View>
-            <View style={styles.metaItem}>
-              <Text style={styles.metaIcon}>🕘</Text>
-              <Text style={styles.metaText}>09:00</Text>
-            </View>
-            <View style={styles.metaItem}>
-              <Text style={styles.metaIcon}>📍</Text>
-              <Text style={styles.metaText}>123 Nguyễn Huệ, Quận 1, TP. Hồ Chí Minh</Text>
+              {vendorData.locations.length > 0 && (
+                <View style={styles.locationInfo}>
+                  <Text style={styles.locationIcon}>📍</Text>
+                  <Text style={styles.locationText}>
+                    {vendorData.locations[0].address}, {vendorData.locations[0].district}, {vendorData.locations[0].city}
+                  </Text>
+                </View>
+              )}
             </View>
           </View>
         </View>
 
-        {/* Additional Services */}
+        {/* Concept Selection */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Dịch vụ bổ sung</Text>
-          <View style={styles.serviceList}>
-            <View style={styles.serviceItem}>
-              <CheckBox checked={formData.selectedServices.premium} onPress={() => handleServiceToggle("premium")} />
-              <View style={styles.serviceDetails}>
-                <Text style={styles.serviceName}>Trang điểm cô dâu cao cấp</Text>
-                <Text style={[styles.servicePrice, { color: theme.colors.primary }]}>{formatPrice(1500000)}</Text>
-              </View>
-            </View>
+          <Text style={styles.sectionTitle}>Chọn gói chụp ảnh</Text>
+          {allConcepts.length === 0 ? (
+            <Text style={styles.noConceptText}>Không có gói chụp ảnh nào khả dụng</Text>
+          ) : (
+            <View style={styles.conceptList}>
+              {allConcepts.map((concept) => (
+                <TouchableOpacity
+                  key={concept.id}
+                  onPress={() => handleConceptSelect(concept)}
+                  style={[
+                    styles.conceptItem,
+                    {
+                      borderColor: formData.selectedConcept?.id === concept.id ? theme.colors.primary : "#e5e7eb",
+                      borderWidth: formData.selectedConcept?.id === concept.id ? 2 : 1,
+                      backgroundColor: formData.selectedConcept?.id === concept.id ? "#fef3e2" : "white",
+                    },
+                  ]}
+                >
+                  <View style={styles.conceptHeader}>
+                    <RadioButton
+                      selected={formData.selectedConcept?.id === concept.id}
+                      onPress={() => handleConceptSelect(concept)}
+                    />
+                    <View style={styles.conceptInfo}>
+                      <Text style={styles.conceptName}>{concept.name}</Text>
+                      <Text style={styles.conceptPackage}>Gói: {concept.packageName}</Text>
+                      <Text style={[styles.conceptPrice, { color: theme.colors.primary }]}>
+                        {formatPrice(Number.parseFloat(concept.price))}
+                      </Text>
+                    </View>
+                  </View>
 
-            <View style={styles.serviceItem}>
-              <CheckBox checked={formData.selectedServices.album} onPress={() => handleServiceToggle("album")} />
-              <View style={styles.serviceDetails}>
-                <Text style={styles.serviceName}>Album ảnh cao cấp thêm</Text>
-                <Text style={[styles.servicePrice, { color: theme.colors.primary }]}>{formatPrice(1200000)}</Text>
-              </View>
-            </View>
+                  {/* {concept.images && concept.images.length > 0 && (
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.conceptImages}>
+                      {concept.images.slice(0, 3).map((image: string, index: number) => (
+                        <Image key={index} source={{ uri: image }} style={styles.conceptImage} />
+                      ))}
+                      {concept.images.length > 3 && (
+                        <View style={styles.moreImagesIndicator}>
+                          <Text style={styles.moreImagesText}>+{concept.images.length - 3}</Text>
+                        </View>
+                      )}
+                    </ScrollView>
+                  )} */}
 
-            <View style={styles.serviceItem}>
-              <CheckBox
-                checked={formData.selectedServices.extraHour}
-                onPress={() => handleServiceToggle("extraHour")}
-              />
-              <View style={styles.serviceDetails}>
-                <Text style={styles.serviceName}>Chụp thêm 1 giờ</Text>
-                <Text style={[styles.servicePrice, { color: theme.colors.primary }]}>{formatPrice(800000)}</Text>
-              </View>
+                  {/* <Text style={styles.conceptDescription} numberOfLines={3}>
+                    {concept.description}
+                  </Text> */}
+
+                  {/* {concept.serviceTypes && concept.serviceTypes.length > 0 && (
+                    <View style={styles.serviceTypes}>
+                      {concept.serviceTypes.map((type: any) => (
+                        <View key={type.id} style={styles.serviceTypeTag}>
+                          <Text style={styles.serviceTypeText}>{type.name}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  )}
+
+                  {concept.duration > 0 && (
+                    <View style={styles.durationInfo}>
+                      <Text style={styles.durationIcon}>⏱️</Text>
+                      <Text style={styles.durationText}>{Math.round(concept.duration / 60)} giờ</Text>
+                    </View>
+                  )} */}
+                </TouchableOpacity>
+              ))}
             </View>
-          </View>
+          )}
         </View>
 
-        {/* Voucher Selection */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Voucher</Text>
-          <View style={styles.voucherList}>
-            {[
-              { value: "", label: "Không sử dụng voucher" },
-              { value: "discount10", label: "Giảm 10%" },
-              { value: "discount15", label: "Giảm 15%" },
-            ].map((voucher) => (
-              <TouchableOpacity
-                key={voucher.value}
-                onPress={() => handleVoucherChange(voucher.value)}
-                style={[
-                  styles.voucherItem,
-                  {
-                    borderColor: formData.voucher === voucher.value ? theme.colors.primary : "#e5e7eb",
-                    backgroundColor: formData.voucher === voucher.value ? "#fef3e2" : "white",
-                  },
-                ]}
-              >
-                <Text style={styles.voucherText}>{voucher.label}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
+        {/* Additional Services - Only show if concept is selected */}
+        {formData.selectedConcept && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Dịch vụ bổ sung</Text>
+            <View style={styles.serviceList}>
+              <View style={styles.serviceItem}>
+                <CheckBox
+                  checked={formData.selectedServices.premium}
+                  onPress={() => handleServiceToggle("premium")}
+                />
+                <View style={styles.serviceDetails}>
+                  <Text style={styles.serviceName}>Trang điểm cô dâu cao cấp</Text>
+                  <Text style={[styles.servicePrice, { color: theme.colors.primary }]}>{formatPrice(1500000)}</Text>
+                </View>
+              </View>
 
-        {/* Order Summary */}
-        <View style={styles.orderSummary}>
-          <Text style={styles.sectionTitle}>Tóm tắt đơn hàng</Text>
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Tạm tính</Text>
-            <Text style={styles.summaryValue}>{formatPrice(calculateTotal())}</Text>
+              <View style={styles.serviceItem}>
+                <CheckBox checked={formData.selectedServices.album} onPress={() => handleServiceToggle("album")} />
+                <View style={styles.serviceDetails}>
+                  <Text style={styles.serviceName}>Album ảnh cao cấp thêm</Text>
+                  <Text style={[styles.servicePrice, { color: theme.colors.primary }]}>{formatPrice(1200000)}</Text>
+                </View>
+              </View>
+
+              <View style={styles.serviceItem}>
+                <CheckBox
+                  checked={formData.selectedServices.extraHour}
+                  onPress={() => handleServiceToggle("extraHour")}
+                />
+                <View style={styles.serviceDetails}>
+                  <Text style={styles.serviceName}>Chụp thêm 1 giờ</Text>
+                  <Text style={[styles.servicePrice, { color: theme.colors.primary }]}>{formatPrice(800000)}</Text>
+                </View>
+              </View>
+            </View>
           </View>
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryTotalLabel}>Tổng cộng</Text>
-            <Text style={styles.summaryTotalValue}>{formatPrice(calculateTotal())}</Text>
+        )}
+
+        {/* Voucher Selection - Only show if concept is selected */}
+        {formData.selectedConcept && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Voucher</Text>
+            <View style={styles.voucherList}>
+              {[
+                { value: "", label: "Không sử dụng voucher" },
+                { value: "discount10", label: "Giảm 10%" },
+                { value: "discount15", label: "Giảm 15%" },
+              ].map((voucher) => (
+                <TouchableOpacity
+                  key={voucher.value}
+                  onPress={() => handleVoucherChange(voucher.value)}
+                  style={[
+                    styles.voucherItem,
+                    {
+                      borderColor: formData.voucher === voucher.value ? theme.colors.primary : "#e5e7eb",
+                      backgroundColor: formData.voucher === voucher.value ? "#fef3e2" : "white",
+                    },
+                  ]}
+                >
+                  <Text style={styles.voucherText}>{voucher.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
           </View>
-        </View>
+        )}
+
+        {/* Order Summary - Only show if concept is selected */}
+        {formData.selectedConcept && (
+          <View style={styles.orderSummary}>
+            <Text style={styles.sectionTitle}>Tóm tắt đơn hàng</Text>
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Gói chụp ảnh</Text>
+              <Text style={styles.summaryValue}>
+                {formatPrice(Number.parseFloat(formData.selectedConcept.price))}
+              </Text>
+            </View>
+            {formData.selectedServices.premium && (
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Trang điểm cao cấp</Text>
+                <Text style={styles.summaryValue}>{formatPrice(1500000)}</Text>
+              </View>
+            )}
+            {formData.selectedServices.album && (
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Album cao cấp</Text>
+                <Text style={styles.summaryValue}>{formatPrice(1200000)}</Text>
+              </View>
+            )}
+            {formData.selectedServices.extraHour && (
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Chụp thêm 1 giờ</Text>
+                <Text style={styles.summaryValue}>{formatPrice(800000)}</Text>
+              </View>
+            )}
+            <View style={styles.summaryDivider} />
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryTotalLabel}>Tổng cộng</Text>
+              <Text style={styles.summaryTotalValue}>{formatPrice(calculateTotal())}</Text>
+            </View>
+          </View>
+        )}
 
         <TouchableOpacity
           onPress={onNext}
-          disabled={isLoading}
-          style={[styles.primaryButton, { backgroundColor: theme.colors.primary }, isLoading && styles.buttonDisabled]}
+          disabled={isLoading || !formData.selectedConcept}
+          style={[
+            styles.primaryButton,
+            { backgroundColor: theme.colors.primary },
+            (isLoading || !formData.selectedConcept) && styles.buttonDisabled,
+          ]}
         >
-          <Text style={styles.primaryButtonText}>{isLoading ? "Đang xử lý..." : "Tiếp tục →"}</Text>
+          <Text style={styles.primaryButtonText}>
+            {isLoading ? "Đang xử lý..." : !formData.selectedConcept ? "Vui lòng chọn gói chụp ảnh" : "Tiếp tục →"}
+          </Text>
         </TouchableOpacity>
       </View>
     </ScrollView>
@@ -178,43 +310,48 @@ const styles = StyleSheet.create({
     padding: 16,
     gap: 24,
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: "#6b7280",
+  },
   card: {
     borderWidth: 1,
     borderColor: "#e5e7eb",
     borderRadius: 8,
     padding: 16,
   },
-  packageInfo: {
+  vendorInfo: {
     flexDirection: "row",
     gap: 12,
   },
-  packageIcon: {
+  vendorLogo: {
     width: 64,
     height: 64,
-    backgroundColor: "#fed7aa",
     borderRadius: 8,
-    alignItems: "center",
-    justifyContent: "center",
   },
-  packageIconText: {
-    fontSize: 24,
-  },
-  packageDetails: {
+  vendorDetails: {
     flex: 1,
   },
-  packageTitle: {
+  vendorName: {
     fontWeight: "600",
+    fontSize: 16,
     marginBottom: 4,
   },
-  packageSubtitle: {
+  vendorCategory: {
     fontSize: 14,
     color: "#6b7280",
     marginBottom: 4,
   },
-  packageRating: {
+  vendorRating: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: 4,
     marginBottom: 8,
   },
   star: {
@@ -223,41 +360,118 @@ const styles = StyleSheet.create({
   ratingText: {
     fontSize: 14,
   },
-  packagePricing: {
+  locationInfo: {
     flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+    alignItems: "flex-start",
+    gap: 4,
   },
-  packageLabel: {
-    fontSize: 14,
+  locationIcon: {
+    fontSize: 12,
+    marginTop: 1,
+  },
+  locationText: {
+    fontSize: 12,
     color: "#6b7280",
-  },
-  packagePrice: {
-    fontWeight: "600",
-    fontSize: 18,
-  },
-  packageMeta: {
-    marginTop: 16,
-    gap: 8,
-  },
-  metaItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  metaIcon: {
-    fontSize: 14,
-  },
-  metaText: {
-    fontSize: 14,
-    color: "#6b7280",
+    flex: 1,
   },
   section: {
-    gap: 12,
+    gap: 5,
   },
   sectionTitle: {
     fontWeight: "600",
     fontSize: 16,
+  },
+  noConceptText: {
+    textAlign: "center",
+    color: "#6b7280",
+    fontStyle: "italic",
+    padding: 10,
+  },
+  conceptList: {
+    gap: 6,
+  },
+  conceptItem: {
+    padding: 5,
+    borderRadius: 8,
+    gap: 5,
+  },
+  conceptHeader: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 12,
+  },
+  conceptInfo: {
+    flex: 1,
+  },
+  conceptName: {
+    fontWeight: "600",
+    fontSize: 16,
+    marginBottom: 4,
+  },
+  conceptPackage: {
+    fontSize: 12,
+    color: "#6b7280",
+    marginBottom: 4,
+  },
+  conceptPrice: {
+    fontWeight: "600",
+    fontSize: 18,
+  },
+  conceptImages: {
+    marginVertical: 8,
+  },
+  conceptImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 6,
+    marginRight: 8,
+  },
+  moreImagesIndicator: {
+    width: 80,
+    height: 80,
+    borderRadius: 6,
+    backgroundColor: "#f3f4f6",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  moreImagesText: {
+    fontSize: 12,
+    color: "#6b7280",
+    fontWeight: "500",
+  },
+  conceptDescription: {
+    fontSize: 14,
+    color: "#6b7280",
+    lineHeight: 20,
+  },
+  serviceTypes: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 6,
+    marginTop: 8,
+  },
+  serviceTypeTag: {
+    backgroundColor: "#e5e7eb",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  serviceTypeText: {
+    fontSize: 12,
+    color: "#374151",
+  },
+  durationInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginTop: 8,
+  },
+  durationIcon: {
+    fontSize: 12,
+  },
+  durationText: {
+    fontSize: 12,
+    color: "#6b7280",
   },
   serviceList: {
     gap: 12,
@@ -297,6 +511,27 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: "bold",
   },
+  radioButton: {
+    padding: 4,
+  },
+  radioButtonInner: {
+    width: 16,
+    height: 16,
+    borderWidth: 1,
+    borderColor: "#d1d5db",
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  radioButtonSelected: {
+    borderColor: "#3b82f6",
+  },
+  radioButtonDot: {
+    width: 8,
+    height: 8,
+    backgroundColor: "#3b82f6",
+    borderRadius: 4,
+  },
   voucherList: {
     gap: 8,
   },
@@ -317,6 +552,7 @@ const styles = StyleSheet.create({
   summaryRow: {
     flexDirection: "row",
     justifyContent: "space-between",
+    paddingVertical: 2,
   },
   summaryLabel: {
     fontSize: 14,
@@ -324,13 +560,18 @@ const styles = StyleSheet.create({
   summaryValue: {
     fontSize: 14,
   },
+  summaryDivider: {
+    height: 1,
+    backgroundColor: "#e5e7eb",
+    marginVertical: 8,
+  },
   summaryTotalLabel: {
     fontWeight: "600",
-    fontSize: 18,
+    fontSize: 16,
   },
   summaryTotalValue: {
     fontWeight: "600",
-    fontSize: 18,
+    fontSize: 16,
   },
   primaryButton: {
     padding: 12,

@@ -1,7 +1,67 @@
-import type { PaymentFormData } from "../types/payment"
+import axios from "axios";
+import type { LocationAvailabilityResponse, PaymentFormData, VendorData } from "../types/payment"
 
-// Mock API functions - replace with your actual API endpoints
+// API functions
 export const paymentApi = {
+  // Fetch vendor data by slug
+  fetchVendorBySlug: async (slug: string): Promise<VendorData> => {
+    try {
+      const response = await axios.get(`${process.env.EXPO_PUBLIC_API_URL}/vendors/slug/${slug}`);
+      const result = response.data;
+      
+      if (result.statusCode === 200) {
+        return result.data
+      } else {
+        throw new Error(result.message || "Failed to fetch vendor data")
+      }
+    } catch (error) {
+      console.error("Error fetching vendor:", error)
+      throw error
+    }
+  },
+
+  // Fetch location availability (general dates and slots)
+  fetchLocationAvailability: async (locationId: string): Promise<LocationAvailabilityResponse> => {
+    try {
+      const response = await axios.get(
+        `${process.env.EXPO_PUBLIC_API_URL}/location-availability/location/${locationId}?current=1&pageSize=10`,
+      )
+      const result = await response.data;
+
+      if (result.statusCode === 200) {
+        return result
+      } else {
+        throw new Error(result.message || "Failed to fetch location availability")
+      }
+    } catch (error) {
+      console.error("Error fetching location availability:", error)
+      throw error
+    }
+  },
+
+  // Fetch specific date availability (detailed slot information)
+  fetchDateAvailability: async (locationId: string, date: string): Promise<LocationAvailabilityResponse> => {
+    try {
+      // Convert YYYY-MM-DD to DD/MM/YYYY for API
+      const [year, month, day] = date.split("-")
+      const formattedDate = `${day}%2F${month}%2F${year}`
+
+      const response = await fetch(
+        `${process.env.EXPO_PUBLIC_API_URL}/location-availability/location/${locationId}/date?date=${formattedDate}&current=1&pageSize=10`,
+      )
+      const result = await response.json()
+
+      if (result.statusCode === 200) {
+        return result
+      } else {
+        throw new Error(result.message || "Failed to fetch date availability")
+      }
+    } catch (error) {
+      console.error("Error fetching date availability:", error)
+      throw error
+    }
+  },
+
   // Step 1: Validate services and calculate pricing
   validateServices: async (services: PaymentFormData["selectedServices"]) => {
     return new Promise((resolve) => {
@@ -41,11 +101,16 @@ export const paymentApi = {
           return
         }
 
+        const conceptPrice = paymentData.selectedConcept
+          ? Number.parseFloat(paymentData.selectedConcept.price)
+          : 6500000
+        const paymentAmount = Math.round((conceptPrice * Number.parseInt(paymentData.paymentOption)) / 100)
+
         resolve({
           success: true,
           transactionId: "TXN_" + Date.now(),
           paymentStatus: "completed",
-          amount: Math.round((6500000 * Number.parseInt(paymentData.paymentOption)) / 100),
+          amount: paymentAmount,
         })
       }, 2000)
     })

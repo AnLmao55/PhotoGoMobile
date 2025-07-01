@@ -14,14 +14,6 @@ const theme = {
   },
 }
 
-const RadioButton = ({ selected, onPress }: { selected: boolean; onPress: () => void }) => (
-  <TouchableOpacity onPress={onPress} style={styles.radioButton}>
-    <View style={[styles.radioButtonInner, selected && styles.radioButtonSelected]}>
-      {selected && <View style={styles.radioButtonDot} />}
-    </View>
-  </TouchableOpacity>
-)
-
 export default function Step3({ formData, onUpdateFormData, onNext, onBack, isLoading }: StepProps) {
   const [errors, setErrors] = useState<Record<string, string>>({})
 
@@ -29,238 +21,139 @@ export default function Step3({ formData, onUpdateFormData, onNext, onBack, isLo
     return price.toLocaleString("vi-VN") + "đ"
   }
 
-  const basePrice = 6500000
-
-  const getPaymentAmount = () => {
-    const percentage = Number.parseInt(formData.paymentOption)
-    return Math.round((basePrice * percentage) / 100)
+  const calculateTotal = () => {
+    let total = formData.selectedConcept ? Number.parseFloat(formData.selectedConcept.price) : 0
+    if (formData.selectedServices.premium) total += 1500000
+    if (formData.selectedServices.album) total += 1200000
+    if (formData.selectedServices.extraHour) total += 800000
+    return total
   }
 
-  const validateCardDetails = () => {
-    if (formData.paymentMethod !== "card") return true
-
+  const validateForm = () => {
     const newErrors: Record<string, string> = {}
 
-    if (!formData.cardDetails.number.trim()) {
-      newErrors.cardNumber = "Vui lòng nhập số thẻ"
-    } else if (formData.cardDetails.number.replace(/\s/g, "").length < 16) {
-      newErrors.cardNumber = "Số thẻ không hợp lệ"
+    if (!formData.customerInfo.name.trim()) {
+      newErrors.name = "Vui lòng nhập họ và tên"
     }
 
-    if (!formData.cardDetails.expiry.trim()) {
-      newErrors.expiry = "Vui lòng nhập ngày hết hạn"
-    } else if (!/^\d{2}\/\d{2}$/.test(formData.cardDetails.expiry)) {
-      newErrors.expiry = "Định dạng MM/YY"
+    if (!formData.customerInfo.email.trim()) {
+      newErrors.email = "Vui lòng nhập email"
+    } else if (!/\S+@\S+\.\S+/.test(formData.customerInfo.email)) {
+      newErrors.email = "Email không hợp lệ"
     }
 
-    if (!formData.cardDetails.cvv.trim()) {
-      newErrors.cvv = "Vui lòng nhập CVV"
-    } else if (formData.cardDetails.cvv.length < 3) {
-      newErrors.cvv = "CVV không hợp lệ"
-    }
-
-    if (!formData.cardDetails.name.trim()) {
-      newErrors.cardName = "Vui lòng nhập tên chủ thẻ"
+    if (!formData.customerInfo.phone.trim()) {
+      newErrors.phone = "Vui lòng nhập số điện thoại"
+    } else if (!/^[0-9]{10,11}$/.test(formData.customerInfo.phone.replace(/\s/g, ""))) {
+      newErrors.phone = "Số điện thoại không hợp lệ"
     }
 
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
 
-  const handlePayment = async () => {
-    if (!validateCardDetails()) {
-      Alert.alert("Lỗi", "Vui lòng kiểm tra lại thông tin thẻ")
-      return
-    }
-
-    try {
-      // Call API here
-      await onNext()
-    } catch (error) {
-      Alert.alert("Lỗi", "Có lỗi xảy ra khi xử lý thanh toán")
+  const handleNext = () => {
+    if (validateForm()) {
+      onNext()
+    } else {
+      Alert.alert("Lỗi", "Vui lòng kiểm tra lại thông tin đã nhập")
     }
   }
 
-  const updatePaymentOption = (option: string) => {
-    onUpdateFormData({ paymentOption: option })
-  }
-
-  const updatePaymentMethod = (method: string) => {
-    onUpdateFormData({ paymentMethod: method })
-    setErrors({}) // Clear card errors when switching payment method
-  }
-
-  const updateCardDetails = (field: keyof typeof formData.cardDetails, value: string) => {
+  const updateCustomerInfo = (field: keyof typeof formData.customerInfo, value: string) => {
     onUpdateFormData({
-      cardDetails: {
-        ...formData.cardDetails,
+      customerInfo: {
+        ...formData.customerInfo,
         [field]: value,
       },
     })
 
     // Clear error when user starts typing
-    const errorKey = field === "number" ? "cardNumber" : field === "name" ? "cardName" : field
-    if (errors[errorKey]) {
-      setErrors((prev) => ({ ...prev, [errorKey]: "" }))
+    if (errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: "" }))
     }
+  }
+
+  const formatDateTime = () => {
+    if (!formData.bookingDateTime) return ""
+    const { date, time } = formData.bookingDateTime
+    const formattedDate = date.split("-").reverse().join("/")
+    return `${formattedDate} lúc ${time}`
   }
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <View style={styles.content}>
-        {/* Payment Options */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Chọn mức đặt cọc</Text>
-          <View style={styles.optionList}>
-            {[
-              { value: "30", label: "Đặt cọc 30%", amount: Math.round(basePrice * 0.3) },
-              { value: "50", label: "Đặt cọc 50%", amount: Math.round(basePrice * 0.5) },
-              { value: "100", label: "Thanh toán 100%", amount: basePrice },
-            ].map((option) => (
-              <TouchableOpacity
-                key={option.value}
-                onPress={() => updatePaymentOption(option.value)}
-                style={[
-                  styles.optionItem,
-                  {
-                    borderColor: formData.paymentOption === option.value ? theme.colors.primary : "#e5e7eb",
-                    borderWidth: formData.paymentOption === option.value ? 2 : 1,
-                  },
-                ]}
-              >
-                <RadioButton
-                  selected={formData.paymentOption === option.value}
-                  onPress={() => updatePaymentOption(option.value)}
-                />
-                <View style={styles.optionContent}>
-                  <Text style={styles.optionLabel}>{option.label}</Text>
-                  <Text style={styles.optionPrice}>{formatPrice(option.amount)}</Text>
-                </View>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        {/* Payment Methods */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Phương thức thanh toán</Text>
-          <View style={styles.optionList}>
-            {[
-              { value: "card", icon: "💳", title: "Thẻ tín dụng / Ghi nợ", subtitle: "Visa, Mastercard, JCB" },
-              { value: "momo", icon: "📱", title: "Ví điện tử MoMo", subtitle: "Thanh toán qua ví MoMo" },
-              {
-                value: "bank",
-                icon: "🏦",
-                title: "Chuyển khoản ngân hàng",
-                subtitle: "Chuyển khoản trực tiếp đến tài khoản của chúng tôi",
-              },
-            ].map((method) => (
-              <TouchableOpacity
-                key={method.value}
-                onPress={() => updatePaymentMethod(method.value)}
-                style={[
-                  styles.optionItem,
-                  {
-                    borderColor: formData.paymentMethod === method.value ? theme.colors.primary : "#e5e7eb",
-                    borderWidth: formData.paymentMethod === method.value ? 2 : 1,
-                  },
-                ]}
-              >
-                <RadioButton
-                  selected={formData.paymentMethod === method.value}
-                  onPress={() => updatePaymentMethod(method.value)}
-                />
-                <Text style={styles.methodIcon}>{method.icon}</Text>
-                <View style={styles.methodContent}>
-                  <Text style={styles.methodTitle}>{method.title}</Text>
-                  <Text style={styles.methodSubtitle}>{method.subtitle}</Text>
-                </View>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        {/* Card Details */}
-        {formData.paymentMethod === "card" && (
-          <View style={styles.section}>
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Số thẻ *</Text>
-              <TextInput
-                style={[styles.textInput, errors.cardNumber && styles.textInputError]}
-                placeholder="1234 5678 9012 3456"
-                value={formData.cardDetails.number}
-                onChangeText={(text) => updateCardDetails("number", text)}
-                keyboardType="numeric"
-                maxLength={19}
-              />
-              {errors.cardNumber && <Text style={styles.errorText}>{errors.cardNumber}</Text>}
-            </View>
-
-            <View style={styles.cardRow}>
-              <View style={styles.cardHalf}>
-                <Text style={styles.inputLabel}>Ngày hết hạn *</Text>
-                <TextInput
-                  style={[styles.textInput, errors.expiry && styles.textInputError]}
-                  placeholder="MM/YY"
-                  value={formData.cardDetails.expiry}
-                  onChangeText={(text) => updateCardDetails("expiry", text)}
-                  maxLength={5}
-                />
-                {errors.expiry && <Text style={styles.errorText}>{errors.expiry}</Text>}
-              </View>
-              <View style={styles.cardHalf}>
-                <Text style={styles.inputLabel}>CVV *</Text>
-                <TextInput
-                  style={[styles.textInput, errors.cvv && styles.textInputError]}
-                  placeholder="123"
-                  value={formData.cardDetails.cvv}
-                  onChangeText={(text) => updateCardDetails("cvv", text)}
-                  keyboardType="numeric"
-                  secureTextEntry
-                  maxLength={4}
-                />
-                {errors.cvv && <Text style={styles.errorText}>{errors.cvv}</Text>}
-              </View>
-            </View>
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Tên chủ thẻ *</Text>
-              <TextInput
-                style={[styles.textInput, errors.cardName && styles.textInputError]}
-                placeholder="NGUYEN VAN A"
-                value={formData.cardDetails.name}
-                onChangeText={(text) => updateCardDetails("name", text.toUpperCase())}
-                autoCapitalize="characters"
-              />
-              {errors.cardName && <Text style={styles.errorText}>{errors.cardName}</Text>}
-            </View>
+        {/* Selected Concept Summary */}
+        {formData.selectedConcept && (
+          <View style={styles.selectedConceptCard}>
+            <Text style={styles.selectedConceptTitle}>Gói đã chọn</Text>
+            <Text style={styles.selectedConceptName}>{formData.selectedConcept.name}</Text>
+            <Text style={[styles.selectedConceptPrice, { color: theme.colors.primary }]}>
+              {formatPrice(Number.parseFloat(formData.selectedConcept.price))}
+            </Text>
+            {formData.bookingDateTime && <Text style={styles.selectedDateTime}>📅 {formatDateTime()}</Text>}
           </View>
         )}
 
-        {/* Final Order Summary */}
+        <View style={styles.inputGroup}>
+          <Text style={styles.inputLabel}>Họ và tên *</Text>
+          <TextInput
+            style={[styles.textInput, errors.name && styles.textInputError]}
+            placeholder="Nguyễn Văn A"
+            value={formData.customerInfo.name}
+            onChangeText={(text) => updateCustomerInfo("name", text)}
+          />
+          {errors.name && <Text style={styles.errorText}>{errors.name}</Text>}
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.inputLabel}>Email *</Text>
+          <TextInput
+            style={[styles.textInput, errors.email && styles.textInputError]}
+            placeholder="nguyenvana@example.com"
+            value={formData.customerInfo.email}
+            onChangeText={(text) => updateCustomerInfo("email", text)}
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
+          {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.inputLabel}>Số điện thoại *</Text>
+          <TextInput
+            style={[styles.textInput, errors.phone && styles.textInputError]}
+            placeholder="0901234567"
+            value={formData.customerInfo.phone}
+            onChangeText={(text) => updateCustomerInfo("phone", text)}
+            keyboardType="phone-pad"
+          />
+          {errors.phone && <Text style={styles.errorText}>{errors.phone}</Text>}
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.inputLabel}>Ghi chú</Text>
+          <TextInput
+            style={[styles.textInput, styles.textArea]}
+            placeholder="Nhập ghi chú hoặc yêu cầu đặc biệt (nếu có)"
+            value={formData.customerInfo.notes}
+            onChangeText={(text) => updateCustomerInfo("notes", text)}
+            multiline
+            numberOfLines={4}
+          />
+        </View>
+
+        {/* Order Summary */}
         <View style={styles.orderSummary}>
           <Text style={styles.sectionTitle}>Tóm tắt đơn hàng</Text>
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Tạm tính</Text>
-            <Text style={styles.summaryValue}>{formatPrice(basePrice)}</Text>
+            <Text style={styles.summaryValue}>{formatPrice(calculateTotal())}</Text>
           </View>
           <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Tổng cộng</Text>
-            <Text style={styles.summaryValue}>{formatPrice(basePrice)}</Text>
-          </View>
-          <View style={styles.summaryRow}>
-            <Text style={[styles.summaryLabel, { color: theme.colors.primary }]}>
-              Thanh toán ngay ({formData.paymentOption}%)
-            </Text>
-            <Text style={[styles.summaryValue, { color: theme.colors.primary }]}>
-              {formatPrice(getPaymentAmount())}
-            </Text>
-          </View>
-          <View style={styles.summaryRow}>
-            <Text style={[styles.summaryLabel, { color: "#6b7280" }]}>Số tiền còn lại</Text>
-            <Text style={[styles.summaryValue, { color: "#6b7280" }]}>
-              {formatPrice(basePrice - getPaymentAmount())}
-            </Text>
+            <Text style={styles.summaryTotalLabel}>Tổng cộng</Text>
+            <Text style={styles.summaryTotalValue}>{formatPrice(calculateTotal())}</Text>
           </View>
         </View>
 
@@ -269,7 +162,7 @@ export default function Step3({ formData, onUpdateFormData, onNext, onBack, isLo
             <Text style={styles.secondaryButtonText}>Quay lại</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            onPress={handlePayment}
+            onPress={handleNext}
             disabled={isLoading}
             style={[
               styles.primaryButton,
@@ -277,11 +170,9 @@ export default function Step3({ formData, onUpdateFormData, onNext, onBack, isLo
               isLoading && styles.buttonDisabled,
             ]}
           >
-            <Text style={styles.primaryButtonText}>{isLoading ? "Đang thanh toán..." : "Thanh toán"}</Text>
+            <Text style={styles.primaryButtonText}>{isLoading ? "Đang xử lý..." : "Tiếp tục →"}</Text>
           </TouchableOpacity>
         </View>
-
-        <Text style={styles.securityText}>Thanh toán an toàn & bảo mật</Text>
       </View>
     </ScrollView>
   )
@@ -295,71 +186,35 @@ const styles = StyleSheet.create({
     padding: 16,
     gap: 24,
   },
-  section: {
-    gap: 12,
+  selectedConceptCard: {
+    backgroundColor: "#fef3e2",
+    padding: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#f6ac69",
   },
-  sectionTitle: {
+  selectedConceptTitle: {
+    fontSize: 12,
+    color: "#6b7280",
+    marginBottom: 4,
+  },
+  selectedConceptName: {
     fontWeight: "600",
     fontSize: 16,
+    marginBottom: 4,
   },
-  optionList: {
-    gap: 12,
+  selectedConceptPrice: {
+    fontWeight: "600",
+    fontSize: 18,
+    marginBottom: 8,
   },
-  optionItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    padding: 12,
-    borderRadius: 6,
-  },
-  optionContent: {
-    flex: 1,
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  optionLabel: {
-    fontSize: 16,
-  },
-  optionPrice: {
-    fontSize: 16,
-    fontWeight: "500",
-  },
-  methodIcon: {
-    fontSize: 20,
-  },
-  methodContent: {
-    flex: 1,
-  },
-  methodTitle: {
-    fontWeight: "500",
-  },
-  methodSubtitle: {
+  selectedDateTime: {
     fontSize: 14,
     color: "#6b7280",
-  },
-  radioButton: {
-    padding: 4,
-  },
-  radioButtonInner: {
-    width: 16,
-    height: 16,
-    borderWidth: 1,
-    borderColor: "#d1d5db",
-    borderRadius: 8,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  radioButtonSelected: {
-    borderColor: "#3b82f6",
-  },
-  radioButtonDot: {
-    width: 8,
-    height: 8,
-    backgroundColor: "#3b82f6",
-    borderRadius: 4,
+    fontWeight: "500",
   },
   inputGroup: {
-    gap: 8,
+    gap: 4,
   },
   inputLabel: {
     fontWeight: "500",
@@ -375,24 +230,24 @@ const styles = StyleSheet.create({
   textInputError: {
     borderColor: "#ef4444",
   },
+  textArea: {
+    height: 80,
+    textAlignVertical: "top",
+  },
   errorText: {
     color: "#ef4444",
     fontSize: 12,
     marginTop: 4,
   },
-  cardRow: {
-    flexDirection: "row",
-    gap: 16,
-  },
-  cardHalf: {
-    flex: 1,
-    gap: 8,
-  },
   orderSummary: {
     borderTopWidth: 1,
     borderTopColor: "#e5e7eb",
-    paddingTop: 16,
+    paddingTop: 10,
     gap: 8,
+  },
+  sectionTitle: {
+    fontWeight: "600",
+    fontSize: 16,
   },
   summaryRow: {
     flexDirection: "row",
@@ -403,6 +258,14 @@ const styles = StyleSheet.create({
   },
   summaryValue: {
     fontSize: 14,
+  },
+  summaryTotalLabel: {
+    fontWeight: "600",
+    fontSize: 18,
+  },
+  summaryTotalValue: {
+    fontWeight: "600",
+    fontSize: 18,
   },
   buttonRow: {
     flexDirection: "row",
@@ -435,10 +298,5 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: {
     opacity: 0.6,
-  },
-  securityText: {
-    fontSize: 12,
-    textAlign: "center",
-    color: "#6b7280",
   },
 })
