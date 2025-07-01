@@ -1,67 +1,73 @@
+import type React from "react";
+import { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Image,
+  ImageBackground,
+  StyleSheet,
+  Alert,
+  ActivityIndicator,
+  Dimensions,
+  ScrollView,
+} from "react-native";
+import { theme } from "../theme/theme";
+import { useNavigation } from "@react-navigation/native";
+import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as WebBrowser from "expo-web-browser";
+import { GoogleSignin, statusCodes } from "@react-native-google-signin/google-signin";
+import Svg, { Path } from "react-native-svg";
+import axios from "axios";
+import Constants from "expo-constants";
+import { useAlert } from "../components/Alert/AlertContext";
 
-import type React from "react"
-import { useState, useEffect } from "react"
-import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, Alert, ActivityIndicator } from "react-native"
-import { theme } from "../theme/theme"
-import { useNavigation } from "@react-navigation/native"
-import { Ionicons } from "@expo/vector-icons"
-import AsyncStorage from "@react-native-async-storage/async-storage"
-import * as WebBrowser from "expo-web-browser"
-import { GoogleSignin, statusCodes } from "@react-native-google-signin/google-signin"
+// Bắt buộc cho Expo Auth
+WebBrowser.maybeCompleteAuthSession();
 
-// Quan trọng: Phải có dòng này cho expo-auth-session
-WebBrowser.maybeCompleteAuthSession()
-
-const logo = require("../../assets/logocam.png")
+// Assets
+const logo = require("../../assets/logotrang.png");
+const backgroundImage = require("../../assets/login-background.jpg");
+const { width: screenWidth } = Dimensions.get("window");
 
 const LoginScreen: React.FC = () => {
-  const navigation = useNavigation()
-  const [username, setUsername] = useState("")
-  const [password, setPassword] = useState("")
-  const [showPassword, setShowPassword] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-
-  // Khởi tạo GoogleSignin
+  const navigation = useNavigation();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const { customAlert } = useAlert();
   useEffect(() => {
     GoogleSignin.configure({
-    webClientId: '95785649270-fok0s8um7klc3ko4o7uu3jkcujm2tk09.apps.googleusercontent.com', // Web client ID from Google Cloud Console
-    // androidClientId: '1049648822582-70tufheollgie37gi6cti4f6aaarvi0o.apps.googleusercontent.com', // Add this
-    offlineAccess: true,
-    forceCodeForRefreshToken: true,
-    })
-  }, [])
+      webClientId: "95785649270-fok0s8um7klc3ko4o7uu3jkcujm2tk09.apps.googleusercontent.com",
+      offlineAccess: true,
+      forceCodeForRefreshToken: true,
+    });
+  }, []);
 
-  // Kiểm tra trạng thái đăng nhập khi component mount
   useEffect(() => {
-    checkLoginStatus()
-  }, [])
+    checkLoginStatus();
+  }, []);
 
   const checkLoginStatus = async () => {
     try {
-      const isLoggedIn = await AsyncStorage.getItem("isLoggedIn")
+      const isLoggedIn = await AsyncStorage.getItem("isLoggedIn");
       if (isLoggedIn === "true") {
-        navigation.navigate("MainTabs")
+        navigation.navigate("MainTabs");
       }
     } catch (error) {
-      console.error("Error checking login status:", error)
+      console.error("Error checking login status:", error);
     }
-  }
+  };
 
-  // Xử lý đăng nhập Google sử dụng @react-native-google-signin/google-signin
   const handleGoogleLogin = async () => {
     try {
-      setIsLoading(true)
-      console.log("Initiating Google login...")
-
-      // Kiểm tra Google Play Services
-      // await GoogleSignin.hasPlayServices()
-
-      // Đăng nhập và lấy thông tin người dùng
-      const userInfo = await GoogleSignin.signIn()
-      console.log("Google Sign-In successful:", userInfo)
+      setIsLoading(true);
+      const userInfo = await GoogleSignin.signIn();
 
       if (userInfo.user) {
-        // Tạo user object để lưu vào AsyncStorage
         const userData = {
           id: userInfo.user.id,
           email: userInfo.user.email,
@@ -72,177 +78,211 @@ const LoginScreen: React.FC = () => {
           email_verified: true,
           loginMethod: "google",
           loginTime: new Date().toISOString(),
-        }
+        };
 
-        // Lấy token ID nếu cần
-        const tokens = await GoogleSignin.getTokens()
-        const idToken = tokens.idToken
+        const tokens = await GoogleSignin.getTokens();
+        const idToken = tokens.idToken;
 
-        // Lưu thông tin user vào AsyncStorage
         await AsyncStorage.multiSet([
           ["isLoggedIn", "true"],
           ["userData", JSON.stringify(userData)],
           ["userToken", idToken || ""],
           ["loginMethod", "google"],
-        ])
+        ]);
 
-        console.log("User data saved successfully")
-        Alert.alert("Thành công", `Chào mừng ${userData.name}!`, [
-          { text: "OK", onPress: () => navigation.navigate("MainTabs") },
-        ])
+        customAlert("Thành công", "Đăng nhập thành công", () => {
+          navigation.navigate("MainTabs");
+        });
       }
     } catch (error: any) {
-      console.error("Error during Google sign in:", error)
-
+      console.error("Error during Google sign in:", error);
       if (error.code === statusCodes.SIGN_IN_CANCELLED) {
-        console.log("User cancelled the login flow")
+        console.log("User cancelled the login flow");
       } else if (error.code === statusCodes.IN_PROGRESS) {
-        console.log("Sign in is in progress already")
+        console.log("Sign in is in progress already");
       } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-        Alert.alert("Lỗi", "Google Play Services không khả dụng hoặc đã lỗi thời")
+        Alert.alert("Lỗi", "Google Play Services không khả dụng hoặc đã lỗi thời");
       } else {
-        Alert.alert("Lỗi đăng nhập", "Không thể đăng nhập với Google. Vui lòng thử lại.")
+        Alert.alert("Lỗi đăng nhập", "Không thể đăng nhập với Google. Vui lòng thử lại.");
       }
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
-  // Xử lý đăng nhập thường
   const handleLogin = async () => {
-    if (!username || !password) {
-      Alert.alert("Lỗi", "Vui lòng nhập tên đăng nhập và mật khẩu")
-      return
+    if (!email || !password) {
+      Alert.alert("Lỗi", "Vui lòng nhập email và mật khẩu");
+      return;
     }
 
-    setIsLoading(true)
+    setIsLoading(true);
 
-    setTimeout(async () => {
-      if (username === "test" && password === "123") {
-        const userData = {
-          id: "test_user",
-          email: "test@example.com",
-          name: "Test User",
-          username: username,
-          loginMethod: "normal",
-          loginTime: new Date().toISOString(),
+    try {
+      const response = await axios.post(
+        `${Constants.expoConfig?.extra?.apiUrl || process.env.EXPO_PUBLIC_API_URL}/auth/login`,
+        {
+          email,
+          password,
         }
+      );
 
-        await AsyncStorage.multiSet([
-          ["isLoggedIn", "true"],
-          ["userData", JSON.stringify(userData)],
-          ["loginMethod", "normal"],
-        ])
+      const { data } = response.data;
+      const { user, access_token, refresh_token } = data;
 
-        navigation.navigate("MainTabs")
-      } else {
-        Alert.alert("Lỗi", "Tên đăng nhập hoặc mật khẩu không đúng")
+      const userData = {
+        id: user.id || "unknown",
+        email: user.email || email,
+        name: user.name || "User",
+        role: user.role || { id: "unknown", name: "unknown", description: "unknown" },
+        cartId: user.cartId || "unknown",
+        wishlistId: user.wishlistId || "unknown",
+        loginMethod: "normal",
+        loginTime: new Date().toISOString(),
+      };
+
+      await AsyncStorage.multiSet([
+        ["isLoggedIn", "true"],
+        ["userData", JSON.stringify(userData)],
+        ["access_token", access_token || ""],
+        ["refresh_token", refresh_token || ""],
+        ["loginMethod", "normal"],
+      ]);
+
+      customAlert("Thành công", "Đăng nhập thành công", () => {
+        navigation.navigate("MainTabs");
+      });
+    } catch (error: any) {
+      console.error("Login error:", error);
+      let errorMessage = "Đã xảy ra lỗi khi đăng nhập. Vui lòng thử lại.";
+
+      if (error.response) {
+        if (error.response.status === 401) {
+          errorMessage = "Email hoặc mật khẩu không đúng";
+        } else if (error.response.data?.message) {
+          errorMessage = error.response.data.message;
+        }
+      } else if (error.request) {
+        errorMessage = "Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng.";
       }
-      setIsLoading(false)
-    }, 1000)
-  }
 
-  const handleForgotPassword = () => {
-    navigation.navigate("ForgotPassword")
-  }
+      Alert.alert("Lỗi", errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-  const handleRegister = () => {
-    navigation.navigate("Register")
-  }
+  const handleForgotPassword = () => navigation.navigate("ForgotPassword");
+  const handleRegister = () => navigation.navigate("Register");
 
   return (
-    <View style={styles.container}>
-      <Image
-        source={{
-          uri: "https://st2.depositphotos.com/1001599/8660/v/450/depositphotos_86601758-stock-illustration-cameraman.jpg",
-        }}
-        style={styles.tripodImage}
-      />
-      <Image source={logo} style={styles.logo} />
+    <ScrollView style={{ flex: 1, backgroundColor: theme.colors.background }}>
+      <View style={{ height: 700, position: "relative" }}>
+        <ImageBackground source={backgroundImage} style={{ width: "100%", height: "60%" }} resizeMode="cover">
+          {/* Lớp phủ để làm sáng background */}
+          <View style={styles.overlay} />
+          <Svg
+            height="100%"
+            width="100%"
+            viewBox="0 0 1440 320"
+            style={{ position: "absolute", bottom: 0 }}
+          >
+            <Path
+              fill={theme.colors.background}
+              d="M0,160L48,170.7C96,181,192,203,288,213.3C384,224,480,224,576,208C672,192,768,160,864,133.3C960,107,1056,85,1152,80C1248,75,1344,85,1392,90.7L1440,96L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"
+            />
+          </Svg>
+          <View style={{ position: "absolute", top: 15, width: "100%", alignItems: "center" }}>
+            <Image source={logo} style={styles.logo} />
+          </View>
+        </ImageBackground>
+      </View>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Tên đăng nhập"
-        placeholderTextColor={theme.colors.lightText}
-        value={username}
-        onChangeText={setUsername}
-        autoCapitalize="none"
-        editable={!isLoading}
-      />
-
-      <View style={styles.passwordContainer}>
+      <View style={styles.container}>
         <TextInput
-          style={[styles.input, styles.passwordInput]}
-          placeholder="Mật khẩu"
+          style={styles.input}
+          placeholder="Email"
           placeholderTextColor={theme.colors.lightText}
-          secureTextEntry={!showPassword}
-          value={password}
-          onChangeText={setPassword}
+          value={email}
+          onChangeText={setEmail}
+          autoCapitalize="none"
+          keyboardType="email-address"
           editable={!isLoading}
         />
-        <TouchableOpacity style={styles.eyeIcon} onPress={() => setShowPassword(!showPassword)} disabled={isLoading}>
-          <Ionicons name={showPassword ? "eye-outline" : "eye-off-outline"} size={24} color={theme.colors.lightText} />
+
+        <View style={styles.passwordContainer}>
+          <TextInput
+            style={[styles.input, styles.passwordInput]}
+            placeholder="Mật khẩu"
+            placeholderTextColor={theme.colors.lightText}
+            secureTextEntry={!showPassword}
+            value={password}
+            onChangeText={setPassword}
+            editable={!isLoading}
+          />
+          <TouchableOpacity style={styles.eyeIcon} onPress={() => setShowPassword(!showPassword)} disabled={isLoading}>
+            <Ionicons name={showPassword ? "eye-outline" : "eye-off-outline"} size={24} color={theme.colors.lightText} />
+          </TouchableOpacity>
+        </View>
+
+        <TouchableOpacity onPress={handleForgotPassword} disabled={isLoading}>
+          <Text style={styles.forgot}>Quên mật khẩu?</Text>
         </TouchableOpacity>
-      </View>
 
-      <TouchableOpacity onPress={handleForgotPassword} disabled={isLoading}>
-        <Text style={styles.forgot}>Quên mật khẩu?</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={[styles.button, isLoading && styles.buttonDisabled]}
-        onPress={handleLogin}
-        disabled={isLoading}
-      >
-        {isLoading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Đăng nhập</Text>}
-      </TouchableOpacity>
-
-      <View style={styles.orContainer}>
-        <View style={styles.line} />
-        <Text style={styles.or}>Hoặc tiếp tục với</Text>
-        <View style={styles.line} />
-      </View>
-
-      <View style={styles.social}>
         <TouchableOpacity
-          style={[styles.socialButton, isLoading && styles.buttonDisabled]}
-          onPress={handleGoogleLogin}
+          style={[styles.button, isLoading && styles.buttonDisabled]}
+          onPress={handleLogin}
           disabled={isLoading}
         >
-          {isLoading ? (
-            <ActivityIndicator color={theme.colors.primary} />
-          ) : (
-            <Image
-              source={{
-                uri: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/768px-Google_%22G%22_logo.svg.png",
-              }}
-              style={styles.socialIcon}
-            />
-          )}
+          {isLoading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Đăng nhập</Text>}
+        </TouchableOpacity>
+
+        <View style={styles.orContainer}>
+          <View style={styles.line} />
+          <Text style={styles.or}>Hoặc tiếp tục với</Text>
+          <View style={styles.line} />
+        </View>
+
+        <View style={styles.social}>
+          <TouchableOpacity
+            style={[styles.socialButton, isLoading && styles.buttonDisabled]}
+            onPress={handleGoogleLogin}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <ActivityIndicator color={theme.colors.primary} />
+            ) : (
+              <Image
+                source={{
+                  uri: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/768px-Google_%22G%22_logo.svg.png",
+                }}
+                style={styles.socialIcon}
+              />
+            )}
+          </TouchableOpacity>
+        </View>
+
+        <TouchableOpacity onPress={handleRegister} disabled={isLoading}>
+          <Text style={styles.register}>Chưa có tài khoản? Đăng ký ngay</Text>
         </TouchableOpacity>
       </View>
-
-      <TouchableOpacity onPress={handleRegister} disabled={isLoading}>
-        <Text style={styles.register}>Chưa có tài khoản? Đăng ký ngay</Text>
-      </TouchableOpacity>
-    </View>
-  )
-}
+    </ScrollView>
+  );
+};
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    paddingBottom: 100,
-    backgroundColor: theme.colors.background,
     alignItems: "center",
     justifyContent: "center",
     padding: theme.spacing.md,
+    marginTop: -400,
   },
   logo: {
-    width: 100,
-    height: 100,
-    marginBottom: theme.spacing.md,
+    width: 200,
+    height: 200,
     resizeMode: "contain",
+    padding: 10,
+    zIndex: 10,
   },
   input: {
     width: "80%",
@@ -292,12 +332,6 @@ const styles = StyleSheet.create({
   register: {
     color: theme.colors.primary,
   },
-  tripodImage: {
-    width: 200,
-    height: 200,
-    marginBottom: theme.spacing.md,
-    resizeMode: "contain",
-  },
   orContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -335,6 +369,10 @@ const styles = StyleSheet.create({
     height: "100%",
     justifyContent: "center",
   },
-})
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(255, 255, 255, 0.2)", // Semi-transparent white overlay
+  },
+});
 
-export default LoginScreen
+export default LoginScreen;

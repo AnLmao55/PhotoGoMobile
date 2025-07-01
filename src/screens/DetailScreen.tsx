@@ -12,22 +12,17 @@ import Carousel from '../components/CarouselDetail';
 import StudioInfoCard from '../components/StudioInfoCard';
 import VoucherCard from '../components/VoucherCard';
 import IntroductionSection from '../components/IntroductionSection';
-
 import VoucherList from '../components/VoucherCard2';
 import ServiceList from '../components/ServiceLIst';
 import WorkList from '../components/WorkList';
 import ReviewList from '../components/ReviewItem';
 import ScreenWithStickyButton from '../components/ScreenWithStickyButton';
-
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { useEffect, useState, } from 'react';
+import axios from 'axios';
 
 const DetailScreen: React.FC = () => {
     const navigation = useNavigation();
-
-import { useEffect, useState } from 'react';
-import { useRoute } from '@react-navigation/native';
-import axios from 'axios';
-const DetailScreen: React.FC = () => {
     const route = useRoute();
     const { slug } = route.params as { slug: string };
     const [studio, setStudio] = useState<any>({}); // Adjust based on your API shape
@@ -62,10 +57,14 @@ const DetailScreen: React.FC = () => {
                 </ScrollView>
 
                 <View style={styles.stickyButtonContainer}>
-                    <TouchableOpacity style={styles.stickyButton} onPress={() => navigation.navigate('Booking')}>
+                    <TouchableOpacity
+                        style={styles.stickyButton}
+                        onPress={() => navigation.navigate('Booking', { slug })}
+                    >
                         <Ionicons name="calendar-outline" size={20} color="white" style={{ marginRight: 8 }} />
                         <Text style={styles.stickyButtonText}>Đặt lịch ngay</Text>
                     </TouchableOpacity>
+
                 </View>
             </View>
         </SafeAreaView>
