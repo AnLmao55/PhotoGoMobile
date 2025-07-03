@@ -52,7 +52,7 @@ const DetailScreen: React.FC = () => {
                     <IntroductionSection studio={studio} />
                     <VoucherList />
                     <ServiceList studio={studio} />
-                    <WorkList />
+                    <WorkList studio={studio} />
                     <ReviewList />
                 </ScrollView>
 
