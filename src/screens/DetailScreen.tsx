@@ -34,7 +34,7 @@ const DetailScreen: React.FC = () => {
     const fetchStudioInfo = async () => {
         try {
             const response = await axios.get(`${process.env.EXPO_PUBLIC_API_URL}/vendors/slug/${slug}`);
-            // console.log("✅ Studio response:", response.data.data);
+            console.log("✅ Studio response:", response.data.data);
             setStudio(response.data.data);
         } catch (error) {
             // console.error("❌ Failed to fetch studio info:", error);

@@ -8,6 +8,7 @@ import {
     Image // ✅ You need to import this
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 
 type Props = {
     studio: any;
@@ -22,8 +23,9 @@ type ServiceType = {
 };
 
 const ServiceItem: React.FC<{ service: ServiceType }> = ({ service }) => {
+    const navigation = useNavigation();
     return (
-        <View style={styles.serviceCard}>
+        <TouchableOpacity onPress={() => navigation.navigate('Concept')} style={styles.serviceCard}>
             <View style={styles.serviceImage}>
                 {service.image ? (
                     <Image source={{ uri: service.image }} style={styles.imageStyle} />
@@ -33,7 +35,7 @@ const ServiceItem: React.FC<{ service: ServiceType }> = ({ service }) => {
             </View>
             <View style={styles.serviceInfo}>
                 <Text style={styles.serviceName}>{service.name}</Text>
-                <Text style={styles.servicePrice}>{Number(service.price).toLocaleString()}đ</Text>
+                {/* <Text style={styles.servicePrice}>{Number(service.price).toLocaleString()}đ</Text> */}
                 {service.duration && (
                     <View style={styles.serviceDurationRow}>
                         <Ionicons name="time-outline" size={16} color="#999" />
@@ -41,7 +43,7 @@ const ServiceItem: React.FC<{ service: ServiceType }> = ({ service }) => {
                     </View>
                 )}
             </View>
-        </View>
+        </TouchableOpacity>
     );
 };
 
