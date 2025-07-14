@@ -4,6 +4,7 @@ import {
     Text,
     StyleSheet,
     TouchableOpacity,
+
 } from 'react-native';
 import RenderHtml from 'react-native-render-html';
 import { useWindowDimensions } from 'react-native';
@@ -27,9 +28,6 @@ const IntroductionSection: React.FC<Props> = ({ studio }) => {
                 <RenderHtml
                     contentWidth={width}
                     source={{ html: studio.description || '' }}
-                    tagsStyles={{
-                        body: expanded ? {} : { maxHeight: 80, overflow: 'hidden' },
-                    }}
                 />
 
                 <TouchableOpacity onPress={() => setExpanded(!expanded)}>

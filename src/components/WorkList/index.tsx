@@ -42,17 +42,13 @@ const WorkList: React.FC<{ studio: any }> = ({ studio }) => {
                 </View>
 
                 <View style={styles.gridContainer}>
-                    {imagesToShow.map((url, index) => {
-                        const isLastInRow = (index + 1) % 3 === 0;
-                        return (
-                            <TouchableOpacity key={index} onPress={() => handleImagePress(url)}>
-                                <View style={[styles.workItem, !isLastInRow && { marginRight: 16 }]}>
-                                    <Image source={{ uri: url }} style={styles.image} />
-                                </View>
-                            </TouchableOpacity>
-                        );
-                    })}
-
+                    {imagesToShow.map((url, index) => (
+                        <TouchableOpacity key={index} onPress={() => handleImagePress(url)}>
+                            <View style={styles.workItem}>
+                                <Image source={{ uri: url }} style={styles.image} />
+                            </View>
+                        </TouchableOpacity>
+                    ))}
                 </View>
             </View>
 
@@ -94,7 +90,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         flexDirection: 'row',
         flexWrap: 'wrap',
-        justifyContent: 'flex-start',
+        justifyContent: 'space-between',
     },
     workItem: {
         width: itemSize,
