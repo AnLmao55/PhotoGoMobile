@@ -139,6 +139,7 @@ const LoginScreen: React.FC = () => {
         wishlistId: user.wishlistId || "unknown",
         loginMethod: "normal",
         loginTime: new Date().toISOString(),
+        access_token: access_token || "",
       };
 
       await AsyncStorage.multiSet([
@@ -147,11 +148,13 @@ const LoginScreen: React.FC = () => {
         ["access_token", access_token || ""],
         ["refresh_token", refresh_token || ""],
         ["loginMethod", "normal"],
+        ["wishlistId", userData.wishlistId], // Store wishlistId explicitly
       ]);
 
       customAlert("Thành công", "Đăng nhập thành công", () => {
         navigation.navigate("MainTabs");
       });
+      console.log("Login successful:", userData);
     } catch (error: any) {
       console.error("Login error:", error);
       let errorMessage = "Đã xảy ra lỗi khi đăng nhập. Vui lòng thử lại.";
