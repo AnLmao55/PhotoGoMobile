@@ -4,26 +4,32 @@ import {
     Text,
     StyleSheet,
     TouchableOpacity,
+
 } from 'react-native';
+import RenderHtml from 'react-native-render-html';
+import { useWindowDimensions } from 'react-native';
 type Props = {
     studio: any;
 };
 const IntroductionSection: React.FC<Props> = ({ studio }) => {
     const [expanded, setExpanded] = useState(false);
-
-    const fullText =
-        'Ánh Dương Studio là studio chụp ảnh chuyên nghiệp hàng đầu tại TP. Hồ Chí Minh với hơn 10 năm kinh nghiệm. Chúng tôi cung cấp dịch vụ chụp ảnh cưới, gia đình, sự kiện và nhiều hơn nữa.Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industrys standar ';
+    const { width } = useWindowDimensions();
 
     return (
         <View style={styles.background}>
             <View style={styles.container}>
                 <Text style={styles.title}>Giới thiệu</Text>
-                <Text
+                {/* <Text
                     style={styles.description}
                     numberOfLines={expanded ? undefined : 2}
                 >
                     {studio.description}
-                </Text>
+                </Text> */}
+                <RenderHtml
+                    contentWidth={width}
+                    source={{ html: studio.description || '' }}
+                />
+
                 <TouchableOpacity onPress={() => setExpanded(!expanded)}>
                     <Text style={styles.toggleText}>
                         {expanded ? 'Thu gọn' : 'Xem thêm'}
