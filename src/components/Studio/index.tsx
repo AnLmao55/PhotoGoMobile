@@ -66,7 +66,7 @@ const Studio: React.FC = () => {
         `${process.env.EXPO_PUBLIC_API_URL}/vendors/filter`, {
         params: {
           current: 1,
-          pageSize: 10,
+          pageSize: 4,
           sortBy: 'distance',
           sortDirection: 'desc',
           userLatitude: 10.762622,
@@ -112,15 +112,7 @@ const Studio: React.FC = () => {
           : "Giá: Liên hệ"}
       </Text>
 
-      <TouchableOpacity
-        style={styles.favoriteIcon}
-        onPress={() => {
-          console.log("Favorited:", item.name)
-          // Handle favorite functionality
-        }}
-      >
-        <Ionicons name="heart-outline" size={24} color={theme.colors.text} />
-      </TouchableOpacity>
+      
     </TouchableOpacity>
   )
 

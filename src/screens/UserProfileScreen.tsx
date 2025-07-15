@@ -81,6 +81,8 @@ const UserProfileScreen: React.FC = () => {
     try {
       await AsyncStorage.removeItem("userData");
       await AsyncStorage.removeItem("access_token");
+      await AsyncStorage.removeItem('wishlistId');
+      await AsyncStorage.removeItem('userData');
       navigation.reset({
         index: 0,
         routes: [{ name: "Login" }], // tên screen cần điều hướng về
@@ -123,13 +125,14 @@ const UserProfileScreen: React.FC = () => {
           <UserProfileCard
             name={userData.fullName || "User"}
             email={userData.email || ""}
+            avatarUrl={userData.avatarUrl || ""}
             isVIP={isVIP}
           />
           <PersonalInfoCard
             fullName={userData.fullName || "User"}
             phone={userData.phoneNumber || ""}
             email={userData.email || ""}
-            address={userData.address || "Chưa cung cấp địa chỉ"}
+            // address={userData.address || "Chưa cung cấp địa chỉ"}
             onEdit={() => console.log("Edit pressed")}
           />
           <LoyaltyCard
