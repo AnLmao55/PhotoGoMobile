@@ -13,52 +13,64 @@ import AllServices from './src/screens/AllServices';
 import Booking from './src/screens/Booking';
 import { AlertProvider } from './src/components/Alert/AlertContext';
 import RegisterScreen from './src/screens/RegisterScreen';
+import ConceptViewer from './src/screens/ConceptViewer';
 const Stack = createStackNavigator();
 
 export default function App() {
   return (
-    
+
     <Provider store={store}>
       <AlertProvider>
-      <NavigationContainer>
-        <Stack.Navigator
-          initialRouteName="Login"
-          screenOptions={{
-            headerShown: false
-          }}
-
-        >
-          <Stack.Screen name="Login" component={LoginScreen} />
-          <Stack.Screen name="Register" component={RegisterScreen} />
-          <Stack.Screen name="MainTabs" component={TabNavigator} />
-          <Stack.Screen
-            name="SpinPrize"
-            component={SpinPrizeGame}
-            options={{
-              title: 'Quay thưởng',
-              headerShown: true
+        <NavigationContainer>
+          <Stack.Navigator
+            initialRouteName="Login"
+            screenOptions={{
+              headerShown: false
             }}
-          />
-          <Stack.Screen name='Detail' component={DetailScreen} />
-          <Stack.Screen name='AllStudio' component={AllStudio}
-            options={{
-              title: 'Tất cả Studio',
-              headerShown: true
-            }} />
-          <Stack.Screen name='AllServices' component={AllServices}
-            options={{
-              title: 'Tất cả dịch vụ',
-              headerShown: true
-            }} />
-          <Stack.Screen name='Booking' component={Booking}
-            options={{
-              title: 'Đặt lịch',
-              headerShown: true
-            }} />
-        </Stack.Navigator>
-      </NavigationContainer>
+
+          >
+            <Stack.Screen name="Login" component={LoginScreen} />
+            <Stack.Screen name="Register" component={RegisterScreen} />
+            <Stack.Screen name="MainTabs" component={TabNavigator} />
+            <Stack.Screen
+              name="SpinPrize"
+              component={SpinPrizeGame}
+              options={{
+                title: 'Quay thưởng',
+                headerShown: true
+              }}
+            />
+            <Stack.Screen name='Detail' component={DetailScreen}
+              options={{
+                title: 'Chi tiết',
+                headerShown: true
+              }}
+            />
+            <Stack.Screen name='AllStudio' component={AllStudio}
+              options={{
+                title: 'Tất cả Studio',
+                headerShown: true
+              }} />
+            <Stack.Screen name='AllServices' component={AllServices}
+              options={{
+                title: 'Tất cả dịch vụ',
+                headerShown: true
+              }} />
+            <Stack.Screen name='Booking' component={Booking}
+              options={{
+                title: 'Đặt lịch',
+                headerShown: true
+              }} />
+            <Stack.Screen name='Concept' component={ConceptViewer}
+              options={{
+                title: 'Xem concept',
+                headerShown: true
+              }}
+            />
+          </Stack.Navigator>
+        </NavigationContainer>
       </AlertProvider>
     </Provider>
-    
+
   );
 }

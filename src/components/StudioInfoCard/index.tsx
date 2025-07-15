@@ -82,9 +82,11 @@ const styles = StyleSheet.create({
     },
     infoRow: {
         flexDirection: 'row',
+        flexWrap: 'wrap', // Allow text to wrap onto the next line
         alignItems: 'center',
         marginTop: 6,
     },
+
     star: {
         fontSize: 14,
         color: '#fbbc04',
@@ -108,7 +110,12 @@ const styles = StyleSheet.create({
     location: {
         fontSize: 13,
         color: '#555',
+        flexShrink: 1, // Allow text to shrink if needed
+        flexGrow: 1,   // Allow text to grow and take up remaining space
+        flexBasis: 'auto',
+        minWidth: 0,   // Prevents text from forcing container to overflow
     },
+
     tagContainer: {
         flexDirection: 'row',
         flexWrap: 'wrap',
