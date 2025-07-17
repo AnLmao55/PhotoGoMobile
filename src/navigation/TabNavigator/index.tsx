@@ -1,27 +1,53 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
+import { View, Text } from 'react-native';
 import HomeScreen from '../../screens/HomeScreen';
 import { theme } from '../../theme/theme';
 import UserProfileScreen from '../../screens/UserProfileScreen';
+import CartScreen from '../../screens/CartScreen';
+import { useCart } from '../../components/Alert/CartContext';
 
 // Placeholder screens for other tabs
-const CartScreen: React.FC = () => <></>;
 const FavoritesScreen: React.FC = () => <></>;
-const ProfileScreen: React.FC = () => <></>;
 
 const Tab = createBottomTabNavigator();
 
 const TabNavigator: React.FC = () => {
+  const { cartItemCount } = useCart();
+
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
         tabBarIcon: ({ color, size }) => {
-          let iconName: string;
+          let iconName: keyof typeof Ionicons.glyphMap;
           if (route.name === 'Trang chủ') {
             iconName = 'home';
           } else if (route.name === 'Giỏ hàng') {
             iconName = 'cart';
+            // Return custom icon with badge for cart
+            return (
+              <View>
+                <Ionicons name={iconName} size={size} color={color} />
+                {cartItemCount > 0 && (
+                  <View style={{
+                    position: 'absolute',
+                    right: -6,
+                    top: -3,
+                    backgroundColor: '#FF4757',
+                    borderRadius: 10,
+                    width: 16,
+                    height: 16,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                  }}>
+                    <Text style={{ color: 'white', fontSize: 10, fontWeight: 'bold' }}>
+                      {cartItemCount > 9 ? '9+' : cartItemCount}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            );
           } else if (route.name === 'Yêu thích') {
             iconName = 'heart';
           } else if (route.name === 'Hồ sơ') {
