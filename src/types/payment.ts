@@ -77,15 +77,24 @@ export interface VendorData {
   averageRating: number
 }
 
+// User profile data to pass to booking form
+export interface UserProfileData {
+  fullName?: string
+  email?: string
+  phoneNumber?: string
+}
+
 export interface PaymentFormData {
   selectedServices: ServiceSelection
   voucher: string
+  voucherCode?: string
   customerInfo: CustomerInfo
   paymentOption: string
   paymentMethod: string
   cardDetails: CardDetails
   selectedConcept?: ServiceConcept
   bookingDateTime?: BookingDateTime
+  vendorData?: VendorData
 }
 
 export interface StepProps {
@@ -95,6 +104,7 @@ export interface StepProps {
   onBack: () => void
   isLoading?: boolean
   vendorData?: VendorData
+  userProfileData?: UserProfileData // Add user profile data
 }
 
 // API Response Types

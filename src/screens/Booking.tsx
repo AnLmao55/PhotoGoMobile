@@ -66,6 +66,11 @@ export default function Booking({ route }: { route: RouteProp<any, any> }) {
                 setIsLoadingVendor(true)
                 const data = await paymentApi.fetchVendorBySlug(slug)
                 setVendorData(data)
+                // Update formData with vendorData
+                setFormData(prev => ({
+                    ...prev,
+                    vendorData: data
+                }))
             } catch (error) {
                 console.error("Error fetching vendor data:", error)
                 Alert.alert("Lỗi", "Không thể tải thông tin nhà cung cấp. Vui lòng thử lại.")
@@ -128,24 +133,23 @@ export default function Booking({ route }: { route: RouteProp<any, any> }) {
     const handleStep4Next = async () => {
         setIsLoading(true)
         try {
-            // Process payment
-            const result = await paymentApi.processPayment(formData)
-
+            // Payment is now handled directly in the Step4 component
+            // We just need to show a success message here
             Alert.alert(
-                "Thanh toán thành công!",
-                `Mã giao dịch: ${result.transactionId}\nSố tiền: ${result.amount.toLocaleString("vi-VN")}đ`,
+                "Đặt lịch thành công!",
+                "Cảm ơn bạn đã đặt lịch. Thông tin chi tiết sẽ được gửi đến email của bạn.",
                 [
                     {
                         text: "OK",
                         onPress: () => {
-                            // Navigate to success screen or reset form
-                            console.log("Payment completed:", result)
+                            // Navigate back or to a success screen
+                            console.log("Booking completed successfully");
                         },
                     },
                 ],
             )
         } catch (error: any) {
-            Alert.alert("Lỗi thanh toán", error.message || "Có lỗi xảy ra khi xử lý thanh toán")
+            Alert.alert("Lỗi", error.message || "Có lỗi xảy ra khi hoàn tất đặt lịch")
         } finally {
             setIsLoading(false)
         }
@@ -183,8 +187,8 @@ export default function Booking({ route }: { route: RouteProp<any, any> }) {
     if (isLoadingVendor) {
         return (
             <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-                <View style={styles.loadingContainer}>
-                    <Text style={styles.loadingText}>Đang tải thông tin...</Text>
+                <View style={{ padding: 20, alignItems: 'center', justifyContent: 'center' }}>
+                    <Text style={{ fontSize: 16, color: '#6B7280' }}>Đang tải thông tin...</Text>
                 </View>
             </View>
         )
