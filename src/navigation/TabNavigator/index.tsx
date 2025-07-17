@@ -22,8 +22,9 @@ const TabNavigator: React.FC = () => {
         tabBarIcon: ({ color, size }) => {
           let iconName: keyof typeof Ionicons.glyphMap;
           if (route.name === 'Trang chủ') {
-            iconName = 'home';
+            iconName = 'home-outline';
           } else if (route.name === 'Giỏ hàng') {
+
             iconName = 'cart';
             // Return custom icon with badge for cart
             return (
@@ -48,12 +49,13 @@ const TabNavigator: React.FC = () => {
                 )}
               </View>
             );
+
           } else if (route.name === 'Yêu thích') {
-            iconName = 'heart';
+            iconName = 'heart-outline';
           } else if (route.name === 'Hồ sơ') {
-            iconName = 'person';
+            iconName = 'person-outline';
           } else {
-            iconName = 'person';
+            iconName = 'person-outline';
           }
           return <Ionicons name={iconName} size={size} color={color} />;
         },

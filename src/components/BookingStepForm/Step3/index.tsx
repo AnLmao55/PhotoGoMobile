@@ -1,8 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { View, Text, TouchableOpacity, TextInput, StyleSheet, ScrollView, Alert } from "react-native"
 import type { StepProps } from "../../../types/payment"
+import AsyncStorage from "@react-native-async-storage/async-storage"
+import { useUserProfile } from "../../../contexts/UserProfileContext"
 
 const theme = {
   colors: {
@@ -14,8 +16,32 @@ const theme = {
   },
 }
 
+// Use a different key to avoid conflicts with login userData
+const BOOKING_USER_DATA_KEY = "bookingUserData"
+
 export default function Step3({ formData, onUpdateFormData, onNext, onBack, isLoading }: StepProps) {
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [isLoadingUserData, setIsLoadingUserData] = useState(false)
+  const { userProfile } = useUserProfile()
+
+  // Use userProfile data from context to fill the form
+  useEffect(() => {
+    if (userProfile) {
+      setIsLoadingUserData(true)
+      
+      // Update form data with user profile data from context
+      onUpdateFormData({
+        customerInfo: {
+          ...formData.customerInfo,
+          name: userProfile.fullName || formData.customerInfo.name,
+          email: userProfile.email || formData.customerInfo.email,
+          phone: userProfile.phoneNumber || formData.customerInfo.phone,
+        },
+      })
+      
+      setIsLoadingUserData(false)
+    }
+  }, [userProfile])
 
   const formatPrice = (price: number) => {
     return price.toLocaleString("vi-VN") + "đ"
@@ -54,7 +80,19 @@ export default function Step3({ formData, onUpdateFormData, onNext, onBack, isLo
 
   const handleNext = () => {
     if (validateForm()) {
-      onNext()
+      // Save user data to AsyncStorage for future use
+      const userDataToSave = JSON.stringify({
+        name: formData.customerInfo.name,
+        email: formData.customerInfo.email,
+        phone: formData.customerInfo.phone,
+      })
+      
+      AsyncStorage.setItem(BOOKING_USER_DATA_KEY, userDataToSave)
+        .then(() => onNext())
+        .catch(error => {
+          console.error('Error saving user data:', error)
+          onNext() // Continue anyway even if saving fails
+        })
     } else {
       Alert.alert("Lỗi", "Vui lòng kiểm tra lại thông tin đã nhập")
     }
@@ -103,6 +141,7 @@ export default function Step3({ formData, onUpdateFormData, onNext, onBack, isLo
             placeholder="Nguyễn Văn A"
             value={formData.customerInfo.name}
             onChangeText={(text) => updateCustomerInfo("name", text)}
+            editable={!isLoadingUserData}
           />
           {errors.name && <Text style={styles.errorText}>{errors.name}</Text>}
         </View>
@@ -116,6 +155,7 @@ export default function Step3({ formData, onUpdateFormData, onNext, onBack, isLo
             onChangeText={(text) => updateCustomerInfo("email", text)}
             keyboardType="email-address"
             autoCapitalize="none"
+            editable={!isLoadingUserData}
           />
           {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
         </View>
@@ -128,6 +168,7 @@ export default function Step3({ formData, onUpdateFormData, onNext, onBack, isLo
             value={formData.customerInfo.phone}
             onChangeText={(text) => updateCustomerInfo("phone", text)}
             keyboardType="phone-pad"
+            editable={!isLoadingUserData}
           />
           {errors.phone && <Text style={styles.errorText}>{errors.phone}</Text>}
         </View>
@@ -158,16 +199,16 @@ export default function Step3({ formData, onUpdateFormData, onNext, onBack, isLo
         </View>
 
         <View style={styles.buttonRow}>
-          <TouchableOpacity onPress={onBack} style={styles.secondaryButton} disabled={isLoading}>
+          <TouchableOpacity onPress={onBack} style={styles.secondaryButton} disabled={isLoading || isLoadingUserData}>
             <Text style={styles.secondaryButtonText}>Quay lại</Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={handleNext}
-            disabled={isLoading}
+            disabled={isLoading || isLoadingUserData}
             style={[
               styles.primaryButton,
               { backgroundColor: theme.colors.primary },
-              isLoading && styles.buttonDisabled,
+              (isLoading || isLoadingUserData) && styles.buttonDisabled,
             ]}
           >
             <Text style={styles.primaryButtonText}>{isLoading ? "Đang xử lý..." : "Tiếp tục →"}</Text>

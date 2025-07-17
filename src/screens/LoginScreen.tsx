@@ -152,6 +152,7 @@ const LoginScreen: React.FC = () => {
         ["refresh_token", refresh_token || ""],
         ["loginMethod", "normal"],
         ["wishlistId", userData.wishlistId], // Store wishlistId explicitly
+        
       ]);
       
       

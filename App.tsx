@@ -11,7 +11,10 @@ import DetailScreen from './src/screens/DetailScreen';
 import AllStudio from './src/screens/AllStudio';
 import AllServices from './src/screens/AllServices';
 import Booking from './src/screens/Booking';
+import MyOrder from './src/screens/MyOrder';
+import OrderDetail from './src/screens/OrderDetail';
 import { AlertProvider } from './src/components/Alert/AlertContext';
+import { UserProfileProvider } from './src/contexts/UserProfileContext';
 import { CartProvider } from './src/components/Alert/CartContext';
 import RegisterScreen from './src/screens/RegisterScreen';
 import ConceptViewer from './src/screens/ConceptViewer';
@@ -22,7 +25,11 @@ export default function App() {
 
     <Provider store={store}>
       <AlertProvider>
+
+        <UserProfileProvider>
+
         <CartProvider>
+
           <NavigationContainer>
             <Stack.Navigator
               initialRouteName="Login"
@@ -69,9 +76,27 @@ export default function App() {
                   headerShown: true
                 }}
               />
+
+              <Stack.Screen name='MyOrder' component={MyOrder}
+                options={{
+                  title: 'Đơn hàng của tôi',
+                  headerShown: true
+                }}
+              />
+              <Stack.Screen name='OrderDetail' component={OrderDetail}
+                options={{
+                  title: 'Chi tiết đơn hàng',
+                  headerShown: true
+                }}
+              />
+            </Stack.Navigator>
+          </NavigationContainer>
+        </UserProfileProvider>
+
             </Stack.Navigator>
           </NavigationContainer>
         </CartProvider>
+
       </AlertProvider>
     </Provider>
 
