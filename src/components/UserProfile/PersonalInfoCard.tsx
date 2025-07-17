@@ -13,7 +13,7 @@ const PersonalInfoCard: React.FC<PersonalInfoCardProps> = ({
     fullName,
     phone,
     email,
-    address,
+    // address,
     onEdit,
 }) => {
     return (
@@ -41,10 +41,10 @@ const PersonalInfoCard: React.FC<PersonalInfoCardProps> = ({
 
             <View style={styles.separator} />
 
-            <View style={styles.row}>
+            {/* <View style={styles.row}>
                 <Text style={styles.label}>Địa chỉ</Text>
                 <Text style={styles.value}>{address}</Text>
-            </View>
+            </View> */}
 
             <TouchableOpacity style={styles.button} onPress={onEdit}>
                 <Text style={styles.buttonText}>Chỉnh sửa thông tin</Text>

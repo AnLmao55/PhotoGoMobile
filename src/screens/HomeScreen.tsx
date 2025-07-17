@@ -41,7 +41,7 @@ const HomeScreen: React.FC = () => {
       <Studio/>
       <Services />   
       
-      <MakeupArtists/>
+      {/* <MakeupArtists/> */}
       <Review/>
     </View>
   );
