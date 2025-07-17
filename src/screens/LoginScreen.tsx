@@ -89,6 +89,9 @@ const LoginScreen: React.FC = () => {
           ["userToken", idToken || ""],
           ["loginMethod", "google"],
         ]);
+        
+        // Log AsyncStorage contents after Google login
+        await logAsyncStorageContent();
 
         customAlert("Thành công", "Đăng nhập thành công", () => {
           navigation.navigate("MainTabs");
@@ -151,6 +154,9 @@ const LoginScreen: React.FC = () => {
         ["wishlistId", userData.wishlistId], // Store wishlistId explicitly
         
       ]);
+      
+      
+      
 
       customAlert("Thành công", "Đăng nhập thành công", () => {
         navigation.navigate("MainTabs");
