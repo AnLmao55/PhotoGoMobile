@@ -11,81 +11,43 @@ import {
   Alert,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import axios from "axios";
-import Constants from "expo-constants";
 import { useNavigation } from "@react-navigation/native";
+import { StackNavigationProp } from "@react-navigation/stack";
+import { Ionicons } from "@expo/vector-icons";
 import UserProfileCard from "../components/UserProfile/UserProfileCard";
 import PersonalInfoCard from "../components/UserProfile/PersonalInfoCard";
 import LoyaltyCard from "../components/UserProfile/LoyaltyCard";
+import { useUserProfile } from "../contexts/UserProfileContext";
+
+// Define navigation types
+type RootStackParamList = {
+  Login: undefined;
+  MainTabs: undefined;
+  Register: undefined;
+  MyOrder: undefined;
+  // Add other screens as needed
+};
+
+type ProfileScreenNavigationProp = StackNavigationProp<RootStackParamList, 'MainTabs'>;
 
 const UserProfileScreen: React.FC = () => {
-  const [userData, setUserData] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const navigation = useNavigation();
+  const navigation = useNavigation<ProfileScreenNavigationProp>();
+  const { userProfile, isLoading, error, refreshUserProfile } = useUserProfile();
 
   useEffect(() => {
-    fetchUserData();
+    refreshUserProfile();
   }, []);
-
-  const fetchUserData = async () => {
-    try {
-      setIsLoading(true);
-      const userDataString = await AsyncStorage.getItem("userData");
-      const accessToken = await AsyncStorage.getItem("access_token");
-
-      if (!userDataString || !accessToken) {
-        Alert.alert("Lỗi", "Không tìm thấy thông tin đăng nhập. Vui lòng đăng nhập lại.");
-        return;
-      }
-
-      const user = JSON.parse(userDataString);
-      const userId = user.id;
-
-      if (!userId || userId === "unknown") {
-        Alert.alert("Lỗi", "Không tìm thấy ID người dùng.");
-        return;
-      }
-
-      const response = await axios.get(
-        `${Constants.expoConfig?.extra?.apiUrl || process.env.EXPO_PUBLIC_API_URL}/users/${userId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
-      );
-
-      const { data } = response.data;
-      setUserData(data);
-    } catch (error: any) {
-      console.error("Error fetching user data:", error);
-      let errorMessage = "Đã xảy ra lỗi khi lấy thông tin người dùng. Vui lòng thử lại.";
-
-      if (error.response) {
-        if (error.response.status === 401) {
-          errorMessage = "Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.";
-        } else if (error.response.data?.message) {
-          errorMessage = error.response.data.message;
-        }
-      } else if (error.request) {
-        errorMessage = "Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng.";
-      }
-
-      Alert.alert("Lỗi", errorMessage);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleLogout = async () => {
     try {
       await AsyncStorage.removeItem("userData");
       await AsyncStorage.removeItem("access_token");
       await AsyncStorage.removeItem('wishlistId');
-      await AsyncStorage.removeItem('userData');
+      
+      // Reset navigation to Login screen with proper typing
       navigation.reset({
         index: 0,
-        routes: [{ name: "Login" }], // tên screen cần điều hướng về
+        routes: [{ name: "Login" }],
       });
     } catch (error) {
       Alert.alert("Lỗi", "Không thể đăng xuất. Vui lòng thử lại.");
@@ -102,18 +64,21 @@ const UserProfileScreen: React.FC = () => {
     );
   }
 
-  if (!userData) {
+  if (error || !userProfile) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.contentContainer}>
           <Text>Không thể tải thông tin người dùng.</Text>
+          <TouchableOpacity onPress={refreshUserProfile} style={styles.retryButton}>
+            <Text style={styles.retryButtonText}>Thử lại</Text>
+          </TouchableOpacity>
         </View>
       </SafeAreaView>
     );
   }
 
-  const isVIP = userData.rank !== "Đồng";
-  const currentLevel = userData.rank || "Đồng";
+  const isVIP = userProfile.rank !== "Đồng";
+  const currentLevel = userProfile.rank || "Đồng";
   const currentPoints = 750; // Placeholder
   const totalPoints = 1000;
   const nextLevelPoints = totalPoints - currentPoints;
@@ -123,16 +88,16 @@ const UserProfileScreen: React.FC = () => {
       <View style={styles.contentContainer}>
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <UserProfileCard
-            name={userData.fullName || "User"}
-            email={userData.email || ""}
-            avatarUrl={userData.avatarUrl || ""}
+            name={userProfile.fullName || "User"}
+            email={userProfile.email || ""}
+            avatarUrl={userProfile.avatarUrl || ""}
             isVIP={isVIP}
           />
           <PersonalInfoCard
-            fullName={userData.fullName || "User"}
-            phone={userData.phoneNumber || ""}
-            email={userData.email || ""}
-            // address={userData.address || "Chưa cung cấp địa chỉ"}
+            fullName={userProfile.fullName || "User"}
+            phone={userProfile.phoneNumber || "Chưa cung cấp"}
+            email={userProfile.email || ""}
+            address={userProfile.address || "Chưa cung cấp địa chỉ"}
             onEdit={() => console.log("Edit pressed")}
           />
           <LoyaltyCard
@@ -142,6 +107,15 @@ const UserProfileScreen: React.FC = () => {
             nextLevelPoints={nextLevelPoints}
             onSeeMore={() => console.log("Xem thêm ưu đãi")}
           />
+          <View style={styles.card}>
+            <TouchableOpacity 
+              style={[styles.button, styles.myOrderButton]} 
+              onPress={() => navigation.navigate('MyOrder')}
+            >
+              <Ionicons name="receipt-outline" size={20} color="white" style={styles.buttonIcon} />
+              <Text style={styles.myOrderButtonText}>Đơn hàng của tôi</Text>
+            </TouchableOpacity>
+          </View>
           <View style={styles.card}>
             <TouchableOpacity style={styles.button} onPress={handleLogout}>
               <Text style={styles.buttonText}>Đăng xuất</Text>
@@ -179,6 +153,33 @@ const styles = StyleSheet.create({
   buttonText: {
     color: "black",
     fontWeight: "600",
+  },
+  retryButton: {
+    marginTop: 16,
+    padding: 12,
+    backgroundColor: "#f6ac69",
+    borderRadius: 6,
+    alignItems: "center",
+  },
+  retryButtonText: {
+    color: "white",
+    fontWeight: "600",
+  },
+  myOrderButton: {
+    backgroundColor: "#f6ac69", // Brand color to match the theme
+    borderWidth: 0,
+    marginBottom: 10,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  myOrderButtonText: {
+    color: "white",
+    fontWeight: "600",
+    marginLeft: 8,
+  },
+  buttonIcon: {
+    marginRight: 4,
   },
 });
 

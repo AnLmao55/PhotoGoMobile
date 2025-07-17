@@ -149,6 +149,7 @@ const LoginScreen: React.FC = () => {
         ["refresh_token", refresh_token || ""],
         ["loginMethod", "normal"],
         ["wishlistId", userData.wishlistId], // Store wishlistId explicitly
+        
       ]);
 
       customAlert("Thành công", "Đăng nhập thành công", () => {

@@ -1,5 +1,46 @@
 import axios from "axios";
 import type { LocationAvailabilityResponse, PaymentFormData, VendorData } from "../types/payment"
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// Define the return type for processPayment
+interface PaymentResult {
+  success: boolean;
+  transactionId: string;
+  paymentStatus: string;
+  amount: number;
+}
+
+// Helper function to inspect userData structure
+const inspectUserData = (userData: any) => {
+  console.log('Inspecting userData structure:');
+  console.log('- Type:', typeof userData);
+  console.log('- Keys:', userData ? Object.keys(userData) : 'null');
+  
+  // Check for common auth token properties
+  const possibleTokenKeys = [
+    'accessToken', 'access_token', 'token', 'authToken', 'auth_token', 
+    'jwt', 'jwtToken', 'idToken', 'id_token'
+  ];
+  
+  for (const key of possibleTokenKeys) {
+    if (userData && userData[key]) {
+      console.log(`- Found token in "${key}" property:`, userData[key].substring(0, 15) + '...');
+    }
+  }
+  
+  // Check if token might be nested in another object
+  for (const key in userData) {
+    if (userData[key] && typeof userData[key] === 'object') {
+      console.log(`- Checking nested object "${key}"`);
+      for (const nestedKey of possibleTokenKeys) {
+        if (userData[key][nestedKey]) {
+          console.log(`  - Found token in "${key}.${nestedKey}" property:`, 
+            userData[key][nestedKey].substring(0, 15) + '...');
+        }
+      }
+    }
+  }
+};
 
 // API functions
 export const paymentApi = {
@@ -92,7 +133,7 @@ export const paymentApi = {
   },
 
   // Step 3: Process payment
-  processPayment: async (paymentData: PaymentFormData) => {
+  processPayment: async (paymentData: PaymentFormData): Promise<PaymentResult> => {
     return new Promise((resolve, reject) => {
       setTimeout(() => {
         // Simulate payment processing
@@ -114,6 +155,92 @@ export const paymentApi = {
         })
       }, 2000)
     })
+  },
+
+  // Create booking and get payment link
+  createBooking: async (paymentData: PaymentFormData) => {
+    try {
+      console.log('Creating booking with payment data:', paymentData);
+      
+      // Get user data from AsyncStorage
+      const userDataString = await AsyncStorage.getItem('userData');
+      const userData = userDataString ? JSON.parse(userDataString) : {};
+      
+      // Get access token
+      const accessToken = await AsyncStorage.getItem('access_token') || userData?.access_token || userData?.accessToken;
+      
+      if (!accessToken) {
+        console.warn('No access token available for authentication');
+        throw new Error('Authentication token not found');
+      }
+      
+      // Format date from YYYY-MM-DD to DD/MM/YYYY
+      const bookingDate = paymentData.bookingDateTime?.date 
+        ? paymentData.bookingDateTime.date.split('-').reverse().join('/') 
+        : '';
+      
+      // Prepare request body - only include fields that have values
+      const requestBody: Record<string, any> = {
+        bookingType: "một ngày"
+      };
+      
+      // Only add fields that have values
+      if (bookingDate) requestBody.date = bookingDate;
+      if (paymentData.bookingDateTime?.time) requestBody.time = paymentData.bookingDateTime.time;
+      if (bookingDate) requestBody.schedules = [bookingDate];
+      
+      requestBody.sourceType = "chiến dịch";
+      
+      if (paymentData.vendorData?.locations?.[0]?.id) {
+        requestBody.locationId = paymentData.vendorData.locations[0].id;
+      }
+      
+      if (paymentData.paymentOption) {
+        requestBody.depositAmount = parseInt(paymentData.paymentOption);
+        requestBody.depositType = "phần trăm";
+      }
+      
+      requestBody.userNote = "Không có";
+      
+      if (paymentData.customerInfo.name) requestBody.fullName = paymentData.customerInfo.name;
+      if (paymentData.customerInfo.phone) requestBody.phone = paymentData.customerInfo.phone;
+      if (paymentData.customerInfo.email) requestBody.email = paymentData.customerInfo.email;
+      
+      if (paymentData.voucherCode) requestBody.voucherId = paymentData.voucherCode;
+      
+      console.log('Request body for booking:', requestBody);
+      
+      // Set up headers with access token
+      const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`
+      };
+      
+      // Make API request
+      const serviceConceptId = paymentData.selectedConcept?.id || "";
+      const userId = userData?.id || "";
+      const response = await axios.post(
+        `${process.env.EXPO_PUBLIC_API_URL}/bookings?userId=${userId}&serviceConceptId=${serviceConceptId}`,
+        requestBody,
+        { headers }
+      );
+      
+      console.log('Booking response:', response.data);
+      
+      return response.data;
+    } catch (error: any) {
+      console.error("Error creating booking:");
+      if (error.response) {
+        console.error("Status:", error.response.status);
+        console.error("Data:", error.response.data);
+      } else if (error.request) {
+        console.error("No response received:", error.request);
+      } else {
+        console.error("Error message:", error.message);
+      }
+      
+      throw error;
+    }
   },
 
   // Get order summary

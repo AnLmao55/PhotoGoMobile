@@ -221,7 +221,7 @@ export default function Step1({ formData, onUpdateFormData, onNext, isLoading, v
         )}
 
         {/* Voucher Selection - Only show if concept is selected */}
-        {formData.selectedConcept && (
+        {/* {formData.selectedConcept && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Voucher</Text>
             <View style={styles.voucherList}>
@@ -246,7 +246,7 @@ export default function Step1({ formData, onUpdateFormData, onNext, isLoading, v
               ))}
             </View>
           </View>
-        )}
+        )} */}
 
         {/* Order Summary - Only show if concept is selected */}
         {formData.selectedConcept && (
