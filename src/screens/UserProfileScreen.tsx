@@ -14,11 +14,10 @@ import {
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
-
 import { StackNavigationProp } from "@react-navigation/stack";
 import { Ionicons } from "@expo/vector-icons";
-
-import { StackNavigationProp } from '@react-navigation/stack';
+import axios from "axios";
+import Constants from "expo-constants";
 
 import UserProfileCard from "../components/UserProfile/UserProfileCard";
 import PersonalInfoCard from "../components/UserProfile/PersonalInfoCard";
@@ -36,19 +35,10 @@ type RootStackParamList = {
 
 type ProfileScreenNavigationProp = StackNavigationProp<RootStackParamList, 'MainTabs'>;
 
-// Define the navigation param list
-type RootStackParamList = {
-  Login: undefined;
-  // Add other screens as needed
-};
-
 const UserProfileScreen: React.FC = () => {
-
   const navigation = useNavigation<ProfileScreenNavigationProp>();
-  const { userProfile, isLoading, error, refreshUserProfile } = useUserProfile();
+  const { userProfile, isLoading: profileLoading, error, refreshUserProfile } = useUserProfile();
 
-  const [userData, setUserData] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [editFormData, setEditFormData] = useState({
     fullName: "",
@@ -60,8 +50,6 @@ const UserProfileScreen: React.FC = () => {
   });
   const [isUpdating, setIsUpdating] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
-
 
   useEffect(() => {
     refreshUserProfile();
@@ -85,14 +73,16 @@ const UserProfileScreen: React.FC = () => {
 
   const handleEditProfile = () => {
     // Initialize form data with current user data
-    setEditFormData({
-      fullName: userData.fullName || "",
-      phoneNumber: userData.phoneNumber || "",
-      email: userData.email || "",
-      password: "",
-      confirmPassword: "",
-      oldPasswordHash: "",
-    });
+    if (userProfile) {
+      setEditFormData({
+        fullName: userProfile.fullName || "",
+        phoneNumber: userProfile.phoneNumber || "",
+        email: userProfile.email || "",
+        password: "",
+        confirmPassword: "",
+        oldPasswordHash: "",
+      });
+    }
     setIsEditModalVisible(true);
   };
 
@@ -139,13 +129,13 @@ const UserProfileScreen: React.FC = () => {
         email: editFormData.email,
         fullName: editFormData.fullName,
         phoneNumber: editFormData.phoneNumber,
-        password: null,
+        password: editFormData.password || undefined,
         confirmPassword: editFormData.confirmPassword || undefined,
         oldPasswordHash: editFormData.oldPasswordHash || undefined,
       };
 
       // Log the request details
-      console.log('API Request URL:', `${Constants.expoConfig?.extra?.apiUrl || process.env.EXPO_PUBLIC_API_URL}/api/v1/users/${userId}`);
+      console.log('API Request URL:', `${Constants.expoConfig?.extra?.apiUrl || process.env.EXPO_PUBLIC_API_URL}/users/${userId}`);
       console.log('Request Headers:', {
         Authorization: `Bearer ${accessToken}`,
         "Content-Type": "application/json",
@@ -172,7 +162,7 @@ const UserProfileScreen: React.FC = () => {
       if (response.status === 200) {
         Alert.alert("Thành công", "Cập nhật thông tin thành công!");
         setIsEditModalVisible(false);
-        fetchUserData(); // Refresh user data
+        refreshUserProfile(); // Use refreshUserProfile instead of fetchUserData
       }
     } catch (error: any) {
       console.error("Error updating user data:", error);
@@ -194,7 +184,7 @@ const UserProfileScreen: React.FC = () => {
     }
   };
 
-  if (isLoading) {
+  if (profileLoading) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.contentContainer}>
@@ -234,12 +224,10 @@ const UserProfileScreen: React.FC = () => {
             isVIP={isVIP}
           />
           <PersonalInfoCard
-
-            fullName={userData.fullName || "User"}
-            phone={userData.phoneNumber || ""}
-            email={userData.email || ""}
+            fullName={userProfile.fullName || "User"}
+            phone={userProfile.phoneNumber || ""}
+            email={userProfile.email || ""}
             onEdit={handleEditProfile}
-
           />
           <LoyaltyCard
             currentLevel={currentLevel}
@@ -397,7 +385,6 @@ const styles = StyleSheet.create({
     color: "black",
     fontWeight: "600",
   },
-
   retryButton: {
     marginTop: 16,
     padding: 12,
@@ -424,7 +411,7 @@ const styles = StyleSheet.create({
   },
   buttonIcon: {
     marginRight: 4,
-
+  },
   
   // Modal styles
   modalContainer: {
@@ -521,7 +508,6 @@ const styles = StyleSheet.create({
   },
   disabledButton: {
     opacity: 0.6,
-
   },
 });
 
