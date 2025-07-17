@@ -463,8 +463,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   checkboxSelected: {
-    backgroundColor: '#FF7F50',
-    borderColor: '#FF7F50',
+    backgroundColor: '#f6ac69',
+    borderColor: '#f6ac69',
   },
   checkboxContainer: {
     justifyContent: 'center',
@@ -544,7 +544,7 @@ const styles = StyleSheet.create({
   conceptPrice: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#FF7F50',
+    color: '#f6ac69',
   },
   removeButton: {
     padding: 8,
@@ -593,11 +593,11 @@ const styles = StyleSheet.create({
   totalPrice: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#f6ac69',
     textAlign: 'right',
   },
   checkoutButton: {
-    backgroundColor: '#FF7F50',
+    backgroundColor: '#f6ac69',
     borderRadius: 8,
     paddingVertical: 14,
     flexDirection: 'row',

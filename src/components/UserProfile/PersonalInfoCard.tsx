@@ -5,7 +5,7 @@ interface PersonalInfoCardProps {
     fullName: string;
     phone: string;
     email: string;
-    address: string;
+    address?: string; // Make address optional
     onEdit?: () => void;
 }
 
