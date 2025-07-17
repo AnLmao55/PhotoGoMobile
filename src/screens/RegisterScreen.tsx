@@ -27,6 +27,21 @@ const logo = require("../../assets/logotrang.png");
 const backgroundImage = require("../../assets/login-background.jpg");
 const { width: screenWidth } = Dimensions.get("window");
 
+// Helper function to log all AsyncStorage contents
+const logAsyncStorageContent = async () => {
+  try {
+    const keys = await AsyncStorage.getAllKeys();
+    const items = await AsyncStorage.multiGet(keys);
+    console.log('===== ASYNC STORAGE CONTENTS AFTER REGISTRATION =====');
+    items.forEach(([key, value]) => {
+      console.log(`${key}: ${value}`);
+    });
+    console.log('=============================================');
+  } catch (error) {
+    console.error('Error logging AsyncStorage content:', error);
+  }
+};
+
 const RegisterScreen: React.FC = () => {
     const navigation = useNavigation();
     const [fullName, setFullName] = useState("");
@@ -95,6 +110,9 @@ const RegisterScreen: React.FC = () => {
                     ["userData", JSON.stringify(userData)],
                     ["loginMethod", "local"],
                 ]);
+                
+                // Log AsyncStorage contents after registration
+                await logAsyncStorageContent();
 
                 setShowOtpModal(true);
             } else {
