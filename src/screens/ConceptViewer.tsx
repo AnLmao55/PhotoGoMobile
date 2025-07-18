@@ -51,9 +51,10 @@ type UserData = {
 const ConceptViewer = () => {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
-  const { servicePackage, studioName } = route.params as { 
+  const { servicePackage, studioName, slug } = route.params as { 
     servicePackage: ServicePackage;
     studioName: string;
+    slug: string;
   };
   const { customAlert } = useAlert();
   
@@ -375,7 +376,15 @@ const ConceptViewer = () => {
           <View style={styles.buttonContainer}>
             <TouchableOpacity 
               style={[styles.bookingButton, styles.primaryButton]}
-              onPress={() => navigation.navigate('Booking')}
+              onPress={() => {
+                const concept = servicePackage.serviceConcepts[selectedConceptIndex];
+                navigation.navigate('Booking', { 
+                  slug: slug,
+                  conceptId: concept.id,
+                  conceptData: concept,
+                  vendorData: servicePackage // Pass the service package as vendor data
+                });
+              }}
             >
               <Text style={styles.bookingButtonText}>Đặt lịch</Text>
             </TouchableOpacity>

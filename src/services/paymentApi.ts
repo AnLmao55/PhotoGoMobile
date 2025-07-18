@@ -61,6 +61,23 @@ export const paymentApi = {
     }
   },
 
+  // Fetch vendor data by concept ID
+  fetchVendorByConceptId: async (conceptId: string): Promise<VendorData> => {
+    try {
+      const response = await axios.get(`${process.env.EXPO_PUBLIC_API_URL}/vendors/concept/${conceptId}`);
+      const result = response.data;
+      
+      if (result.statusCode === 200) {
+        return result.data
+      } else {
+        throw new Error(result.message || "Failed to fetch vendor data")
+      }
+    } catch (error) {
+      console.error("Error fetching vendor by concept:", error)
+      throw error
+    }
+  },
+
   // Fetch location availability (general dates and slots)
   fetchLocationAvailability: async (locationId: string): Promise<LocationAvailabilityResponse> => {
     try {

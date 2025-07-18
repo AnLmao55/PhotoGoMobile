@@ -50,11 +50,7 @@ export default function Step1({ formData, onUpdateFormData, onNext, isLoading, v
   }
 
   const calculateTotal = () => {
-    let total = formData.selectedConcept ? Number.parseFloat(formData.selectedConcept.price) : 0
-    if (formData.selectedServices.premium) total += 1500000
-    if (formData.selectedServices.album) total += 1200000
-    if (formData.selectedServices.extraHour) total += 800000
-    return total
+    return formData.selectedConcept ? Number.parseFloat(formData.selectedConcept.price) : 0
   }
 
   // Get all concepts from all service packages
@@ -112,6 +108,16 @@ export default function Step1({ formData, onUpdateFormData, onNext, isLoading, v
         {/* Concept Selection */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Chọn gói chụp ảnh</Text>
+          
+          {/* Show notification if concept is pre-selected */}
+          {/* {formData.selectedConcept && (
+            <View style={styles.preSelectedNotification}>
+              <Text style={styles.preSelectedText}>
+                ✓ Đã chọn từ ConceptViewer: {formData.selectedConcept.name}
+              </Text>
+            </View>
+          )} */}
+          
           {allConcepts.length === 0 ? (
             <Text style={styles.noConceptText}>Không có gói chụp ảnh nào khả dụng</Text>
           ) : (
@@ -182,44 +188,6 @@ export default function Step1({ formData, onUpdateFormData, onNext, isLoading, v
           )}
         </View>
 
-        {/* Additional Services - Only show if concept is selected */}
-        {formData.selectedConcept && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Dịch vụ bổ sung</Text>
-            <View style={styles.serviceList}>
-              <View style={styles.serviceItem}>
-                <CheckBox
-                  checked={formData.selectedServices.premium}
-                  onPress={() => handleServiceToggle("premium")}
-                />
-                <View style={styles.serviceDetails}>
-                  <Text style={styles.serviceName}>Trang điểm cô dâu cao cấp</Text>
-                  <Text style={[styles.servicePrice, { color: theme.colors.primary }]}>{formatPrice(1500000)}</Text>
-                </View>
-              </View>
-
-              <View style={styles.serviceItem}>
-                <CheckBox checked={formData.selectedServices.album} onPress={() => handleServiceToggle("album")} />
-                <View style={styles.serviceDetails}>
-                  <Text style={styles.serviceName}>Album ảnh cao cấp thêm</Text>
-                  <Text style={[styles.servicePrice, { color: theme.colors.primary }]}>{formatPrice(1200000)}</Text>
-                </View>
-              </View>
-
-              <View style={styles.serviceItem}>
-                <CheckBox
-                  checked={formData.selectedServices.extraHour}
-                  onPress={() => handleServiceToggle("extraHour")}
-                />
-                <View style={styles.serviceDetails}>
-                  <Text style={styles.serviceName}>Chụp thêm 1 giờ</Text>
-                  <Text style={[styles.servicePrice, { color: theme.colors.primary }]}>{formatPrice(800000)}</Text>
-                </View>
-              </View>
-            </View>
-          </View>
-        )}
-
         {/* Voucher Selection - Only show if concept is selected */}
         {/* {formData.selectedConcept && (
           <View style={styles.section}>
@@ -258,28 +226,10 @@ export default function Step1({ formData, onUpdateFormData, onNext, isLoading, v
                 {formatPrice(Number.parseFloat(formData.selectedConcept.price))}
               </Text>
             </View>
-            {formData.selectedServices.premium && (
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Trang điểm cao cấp</Text>
-                <Text style={styles.summaryValue}>{formatPrice(1500000)}</Text>
-              </View>
-            )}
-            {formData.selectedServices.album && (
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Album cao cấp</Text>
-                <Text style={styles.summaryValue}>{formatPrice(1200000)}</Text>
-              </View>
-            )}
-            {formData.selectedServices.extraHour && (
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Chụp thêm 1 giờ</Text>
-                <Text style={styles.summaryValue}>{formatPrice(800000)}</Text>
-              </View>
-            )}
             <View style={styles.summaryDivider} />
             <View style={styles.summaryRow}>
               <Text style={styles.summaryTotalLabel}>Tổng cộng</Text>
-              <Text style={styles.summaryTotalValue}>{formatPrice(calculateTotal())}</Text>
+              <Text style={styles.summaryTotalValue}>{formatPrice(Number.parseFloat(formData.selectedConcept.price))}</Text>
             </View>
           </View>
         )}
@@ -585,5 +535,17 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: {
     opacity: 0.6,
+  },
+  preSelectedNotification: {
+    backgroundColor: "#e0f2fe",
+    padding: 10,
+    borderRadius: 6,
+    marginBottom: 10,
+    alignItems: "center",
+  },
+  preSelectedText: {
+    fontSize: 14,
+    color: "#2b6cb0",
+    fontWeight: "500",
   },
 })
