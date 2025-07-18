@@ -8,7 +8,7 @@ import Step3 from "../components/BookingStepForm/Step3"
 import Step4 from "../components/BookingStepForm/Step4"
 import type { PaymentFormData, VendorData } from "../types/payment"
 import { paymentApi } from "../services/paymentApi"
-import { RouteProp } from "@react-navigation/native"
+import { RouteProp, useNavigation } from "@react-navigation/native"
 
 
 const theme = {
@@ -22,12 +22,22 @@ const theme = {
 }
 
 export default function Booking({ route }: { route: RouteProp<any, any> }) {
-    const { slug } = route.params as { slug: string }
-    console.log(slug)
+    const navigation = useNavigation<any>();
+    const { slug, conceptId, conceptData, vendorData: passedVendorData, fromCart } = route.params as { 
+        slug?: string;
+        conceptId?: string;
+        conceptData?: any;
+        vendorData?: any;
+        fromCart?: boolean;
+    };
+    
+    console.log("Route params:", { slug, conceptId, conceptData, passedVendorData, fromCart });
+    
+    // Start from step 1 if slug is provided, otherwise step 1
     const [currentStep, setCurrentStep] = useState(1)
     const [isLoading, setIsLoading] = useState(false)
     const [vendorData, setVendorData] = useState<VendorData | null>(null)
-    const [isLoadingVendor, setIsLoadingVendor] = useState(true)
+    const [isLoadingVendor, setIsLoadingVendor] = useState(true) // Always load vendor data
     const [formData, setFormData] = useState<PaymentFormData>({
         selectedServices: {
             premium: true,
@@ -58,19 +68,64 @@ export default function Booking({ route }: { route: RouteProp<any, any> }) {
         { number: 4, title: "Thanh toán" },
     ]
 
-
-
     useEffect(() => {
         const fetchVendorData = async () => {
             try {
                 setIsLoadingVendor(true)
-                const data = await paymentApi.fetchVendorBySlug(slug)
-                setVendorData(data)
-                // Update formData with vendorData
-                setFormData(prev => ({
-                    ...prev,
-                    vendorData: data
-                }))
+                
+                // If coming from cart, we need to fetch vendor data by concept
+                if (fromCart && conceptData) {
+                    // If we have slug from cart, use it first
+                    if (slug) {
+                        try {
+                            const data = await paymentApi.fetchVendorBySlug(slug)
+                            setVendorData(data)
+                            setFormData(prev => ({
+                                ...prev,
+                                vendorData: data
+                            }))
+                            return
+                        } catch (error) {
+                            console.error("Error fetching vendor by slug:", error)
+                        }
+                    }
+                    
+                    // Fallback to concept ID if slug fails or not available
+                    try {
+                        const data = await paymentApi.fetchVendorByConceptId(conceptData.id)
+                        setVendorData(data)
+                        setFormData(prev => ({
+                            ...prev,
+                            vendorData: data
+                        }))
+                        return
+                    } catch (error) {
+                        console.error("Error fetching vendor by concept:", error)
+                        Alert.alert("Lỗi", "Không thể tải thông tin nhà cung cấp. Vui lòng thử lại từ trang chi tiết studio.")
+                        return
+                    }
+                }
+                
+                // Always fetch by slug if available
+                if (slug) {
+                    const data = await paymentApi.fetchVendorBySlug(slug)
+                    setVendorData(data)
+                    setFormData(prev => ({
+                        ...prev,
+                        vendorData: data
+                    }))
+                    return
+                }
+                
+                // Fallback to passed vendor data if no slug
+                if (passedVendorData) {
+                    setVendorData(passedVendorData)
+                    setFormData(prev => ({
+                        ...prev,
+                        vendorData: passedVendorData
+                    }))
+                    return
+                }
             } catch (error) {
                 console.error("Error fetching vendor data:", error)
                 Alert.alert("Lỗi", "Không thể tải thông tin nhà cung cấp. Vui lòng thử lại.")
@@ -79,14 +134,23 @@ export default function Booking({ route }: { route: RouteProp<any, any> }) {
             }
         }
 
-        if (slug) {
-            fetchVendorData()
+        fetchVendorData()
+    }, [slug, passedVendorData, fromCart, conceptData])
+
+    // Set selected concept if conceptData is provided
+    useEffect(() => {
+        if (conceptData) {
+            setFormData(prev => ({
+                ...prev,
+                selectedConcept: conceptData
+            }))
         }
-    }, [slug])
+    }, [conceptData])
 
     const updateFormData = (data: Partial<PaymentFormData>) => {
         setFormData((prev) => ({ ...prev, ...data }))
     }
+    
     const handleStep1Next = async () => {
         setIsLoading(true)
         try {
@@ -158,6 +222,9 @@ export default function Booking({ route }: { route: RouteProp<any, any> }) {
     const handleBack = () => {
         if (currentStep > 1) {
             setCurrentStep(currentStep - 1)
+        } else {
+            // If we're at step 1, always go back normally since we have slug
+            navigation.goBack()
         }
     }
 
