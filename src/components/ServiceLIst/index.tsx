@@ -43,6 +43,7 @@ const ServiceList: React.FC<Props> = ({ studio }) => {
     navigation.navigate('Concept', { 
       servicePackage, 
       studioName: studio?.name || 'Dịch vụ',
+      slug: studio?.slug || '', // Add slug for booking navigation
     });
   };
 

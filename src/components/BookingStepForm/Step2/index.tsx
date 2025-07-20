@@ -218,8 +218,8 @@ export default function Step2({
       const isSelected = selectedDate === date
       const isAvailable = isDateAvailable(date)
 
-      const dayStyle = [styles.dayCell]
-      const textStyle = [styles.dayText]
+      const dayStyle: any[] = [styles.dayCell]
+      const textStyle: any[] = [styles.dayText]
       let icon = null
 
       if (isPast) {
@@ -285,8 +285,8 @@ export default function Step2({
     return dateSlots.map((slot) => {
       const isSelected = selectedSlotId === slot.id
       const timeString = formatTimeSlot(slot.startSlotTime)
-      const buttonStyle = [styles.timeSlot]
-      const textStyle = [styles.timeSlotText]
+      const buttonStyle: any[] = [styles.timeSlot]
+      const textStyle: any[] = [styles.timeSlotText]
       let statusText = null
 
       if (!slot.isAvailable) {
