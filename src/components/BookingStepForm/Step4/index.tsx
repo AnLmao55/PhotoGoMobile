@@ -34,11 +34,7 @@ export default function Step4({ formData, onUpdateFormData, onNext, onBack, isLo
   }
 
   const calculateTotal = () => {
-    let total = formData.selectedConcept ? Number.parseFloat(formData.selectedConcept.price) : 0
-    if (formData.selectedServices.premium) total += 1500000
-    if (formData.selectedServices.album) total += 1200000
-    if (formData.selectedServices.extraHour) total += 800000
-    return total
+    return formData.selectedConcept ? Number.parseFloat(formData.selectedConcept.price) : 0
   }
 
   const getPaymentAmount = () => {

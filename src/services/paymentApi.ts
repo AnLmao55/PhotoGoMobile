@@ -159,10 +159,10 @@ export const paymentApi = {
           return
         }
 
-        const conceptPrice = paymentData.selectedConcept
+        let total = paymentData.selectedConcept
           ? Number.parseFloat(paymentData.selectedConcept.price)
           : 6500000
-        const paymentAmount = Math.round((conceptPrice * Number.parseInt(paymentData.paymentOption)) / 100)
+        const paymentAmount = Math.round((total * Number.parseInt(paymentData.paymentOption)) / 100)
 
         resolve({
           success: true,
