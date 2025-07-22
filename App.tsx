@@ -18,6 +18,8 @@ import { UserProfileProvider } from './src/contexts/UserProfileContext';
 import { CartProvider } from './src/components/Alert/CartContext';
 import RegisterScreen from './src/screens/RegisterScreen';
 import ConceptViewer from './src/screens/ConceptViewer';
+import VendorOwnerDashboard from './src/screens/VendorOwnerDashboard';
+
 const Stack = createStackNavigator();
 
 export default function App() {
@@ -36,6 +38,7 @@ export default function App() {
                 <Stack.Screen name="Login" component={LoginScreen} />
                 <Stack.Screen name="Register" component={RegisterScreen} />
                 <Stack.Screen name="MainTabs" component={TabNavigator} />
+                <Stack.Screen name="VendorOwnerDashboard" component={VendorOwnerDashboard} />
                 <Stack.Screen
                   name="SpinPrize"
                   component={SpinPrizeGame}

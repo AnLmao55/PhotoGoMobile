@@ -39,6 +39,35 @@ const LoginScreen: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { customAlert } = useAlert();
+  
+  // Log AsyncStorage content function
+  
+
+  // Navigate based on user role
+  const navigateBasedOnRole = async () => {
+    try {
+      const userDataString = await AsyncStorage.getItem("userData");
+      if (userDataString) {
+        const userData = JSON.parse(userDataString);
+        if (userData.role && userData.role.name) {
+          if (userData.role.name === "vendor-owner") {
+            navigation.navigate("VendorOwnerDashboard" as never);
+          } else {
+            // For customers and other roles
+            navigation.navigate("MainTabs" as never);
+          }
+        } else {
+          // Default to MainTabs if role information is missing
+          navigation.navigate("MainTabs" as never);
+        }
+      }
+    } catch (error) {
+      console.error("Error navigating based on role:", error);
+      // Default to MainTabs if there's an error
+      navigation.navigate("MainTabs" as never);
+    }
+  };
+
   useEffect(() => {
     GoogleSignin.configure({
       webClientId: "95785649270-fok0s8um7klc3ko4o7uu3jkcujm2tk09.apps.googleusercontent.com",
@@ -55,7 +84,7 @@ const LoginScreen: React.FC = () => {
     try {
       const isLoggedIn = await AsyncStorage.getItem("isLoggedIn");
       if (isLoggedIn === "true") {
-        navigation.navigate("MainTabs");
+        navigateBasedOnRole();
       }
     } catch (error) {
       console.error("Error checking login status:", error);
@@ -68,6 +97,7 @@ const LoginScreen: React.FC = () => {
       const userInfo = await GoogleSignin.signIn();
 
       if (userInfo.user) {
+        // For Google login, we'll default to customer role since we don't have role info from Google
         const userData = {
           id: userInfo.user.id,
           email: userInfo.user.email,
@@ -76,6 +106,7 @@ const LoginScreen: React.FC = () => {
           given_name: userInfo.user.givenName || "",
           family_name: userInfo.user.familyName || "",
           email_verified: true,
+          role: { id: "R001", name: "customer", description: "Customer role" }, // Default role for Google login
           loginMethod: "google",
           loginTime: new Date().toISOString(),
         };
@@ -91,10 +122,11 @@ const LoginScreen: React.FC = () => {
         ]);
         
         // Log AsyncStorage contents after Google login
-        await logAsyncStorageContent();
+        
 
         customAlert("Thành công", "Đăng nhập thành công", () => {
-          navigation.navigate("MainTabs");
+          // Always navigate to MainTabs for Google login since we assume customer role
+          navigation.navigate("MainTabs" as never);
         });
       }
     } catch (error: any) {
@@ -152,14 +184,13 @@ const LoginScreen: React.FC = () => {
         ["refresh_token", refresh_token || ""],
         ["loginMethod", "normal"],
         ["wishlistId", userData.wishlistId], // Store wishlistId explicitly
-        
       ]);
       
+      // Log AsyncStorage contents after normal login
       
       
-
       customAlert("Thành công", "Đăng nhập thành công", () => {
-        navigation.navigate("MainTabs");
+        navigateBasedOnRole();
       });
       console.log("Login successful:", userData);
     } catch (error: any) {
@@ -182,8 +213,8 @@ const LoginScreen: React.FC = () => {
     }
   };
 
-  const handleForgotPassword = () => navigation.navigate("ForgotPassword");
-  const handleRegister = () => navigation.navigate("Register");
+  const handleForgotPassword = () => navigation.navigate("ForgotPassword" as never);
+  const handleRegister = () => navigation.navigate("Register" as never);
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: theme.colors.background }}>

@@ -590,6 +590,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     borderWidth: 1,
     borderColor: '#FFDDDD',
+    marginBottom: 100,
   },
   logoutButtonText: {
     color: '#FF4757',
