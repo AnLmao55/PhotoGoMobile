@@ -1,11 +1,12 @@
 "use client"
 
-import { useState } from "react"
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, Image, Linking } from "react-native"
-import type { StepProps } from "../../../types/payment"
+import { useState, useEffect } from "react"
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, Image, Linking, ActivityIndicator, Modal, FlatList } from "react-native"
+import type { StepProps, Voucher, VoucherResponse } from "../../../types/payment"
 import { Ionicons } from "@expo/vector-icons"
 import { paymentApi } from "../../../services/paymentApi"
 import { useNavigation, NavigationProp } from '@react-navigation/native'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 
 type RootStackParamList = {
   UserProfileScreen: undefined;
@@ -27,7 +28,53 @@ const theme = {
 export default function Step4({ formData, onUpdateFormData, onNext, onBack, isLoading }: StepProps) {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [processingPayment, setProcessingPayment] = useState(false)
+  const [vouchers, setVouchers] = useState<Voucher[]>([])
+  const [selectedVoucher, setSelectedVoucher] = useState<Voucher | null>(null)
+  const [voucherModalVisible, setVoucherModalVisible] = useState(false)
+  const [loadingVouchers, setLoadingVouchers] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
   const navigation = useNavigation<NavigationProp<RootStackParamList>>()
+
+  // Fetch vouchers on component mount
+  useEffect(() => {
+    fetchUserVouchers()
+  }, [])
+
+  const fetchUserVouchers = async (page = 1) => {
+    try {
+      setLoadingVouchers(true)
+      const userDataString = await AsyncStorage.getItem('userData')
+      const userData = userDataString ? JSON.parse(userDataString) : {}
+      
+      if (!userData.id) {
+        console.warn('User ID not found in storage')
+        return
+      }
+
+      const response = await paymentApi.fetchUserVouchers(userData.id, page)
+      
+      if (page === 1) {
+        setVouchers(response.data.data)
+      } else {
+        setVouchers(prev => [...prev, ...response.data.data])
+      }
+      
+      setCurrentPage(response.data.pagination.current)
+      setTotalPages(response.data.pagination.totalPage)
+    } catch (error: any) {
+      console.error('Error fetching vouchers:', error)
+      Alert.alert('Lỗi', 'Không thể tải danh sách mã giảm giá')
+    } finally {
+      setLoadingVouchers(false)
+    }
+  }
+
+  const loadMoreVouchers = () => {
+    if (currentPage < totalPages && !loadingVouchers) {
+      fetchUserVouchers(currentPage + 1)
+    }
+  }
 
   const formatPrice = (price: number) => {
     return price.toLocaleString("vi-VN") + "đ"
@@ -37,18 +84,44 @@ export default function Step4({ formData, onUpdateFormData, onNext, onBack, isLo
     return formData.selectedConcept ? Number.parseFloat(formData.selectedConcept.price) : 0
   }
 
+  const calculateDiscount = () => {
+    if (!selectedVoucher) return 0
+    
+    const total = calculateTotal()
+    let discount = 0
+    
+    if (selectedVoucher.voucher.discount_type === "phần trăm") {
+      // Percentage discount
+      const percentage = Number.parseFloat(selectedVoucher.voucher.discount_value)
+      discount = Math.round((total * percentage) / 100)
+    } else {
+      // Fixed amount discount
+      discount = Number.parseFloat(selectedVoucher.voucher.discount_value)
+    }
+    
+    // Ensure discount doesn't exceed total
+    return Math.min(discount, total)
+  }
+
   const getPaymentAmount = () => {
     const total = calculateTotal()
+    const discount = calculateDiscount()
+    const finalAmount = total - discount
     const percentage = Number.parseInt(formData.paymentOption)
-    return Math.round((total * percentage) / 100)
+    return Math.round((finalAmount * percentage) / 100)
   }
 
   const handlePayment = async () => {
     try {
       setProcessingPayment(true)
 
-      // Call the new createBooking API instead of onNext
-      const response = await paymentApi.createBooking(formData)
+      // Call the createBooking API with voucher data if selected
+      const paymentDataWithVoucher = {
+        ...formData,
+        voucherCode: selectedVoucher ? selectedVoucher.voucher_id : undefined
+      }
+      
+      const response = await paymentApi.createBooking(paymentDataWithVoucher)
       
       // Check if we have a payment link in the response
       if (response && response.data && response.data.paymentLink) {
@@ -68,21 +141,62 @@ export default function Step4({ formData, onUpdateFormData, onNext, onBack, isLo
     }
   }
 
+  const handleSelectVoucher = (voucher: Voucher) => {
+    setSelectedVoucher(voucher)
+    setVoucherModalVisible(false)
+  }
+
+  const handleRemoveVoucher = () => {
+    setSelectedVoucher(null)
+  }
+
   const updatePaymentOption = (option: string) => {
     onUpdateFormData({ paymentOption: option })
   }
 
   const formatDateTime = () => {
-    if (!formData.bookingDateTime) return ""
-    const { date, time } = formData.bookingDateTime
-    const formattedDate = date.split("-").reverse().join("/")
-    return `${formattedDate} lúc ${time}`
-  }
+    if (!formData.bookingDateTime) return "";
+    if (formData.bookingDateTime.dates && formData.bookingDateTime.dates.length > 0) {
+      // Multi-day: show all dates
+      return formData.bookingDateTime.dates.map(date => date.split("-").reverse().join("/")).join(", ");
+    }
+    const { date, time } = formData.bookingDateTime;
+    const formattedDate = date.split("-").reverse().join("/");
+    return `${formattedDate} lúc ${time}`;
+  };
+
+  const renderVoucherItem = ({ item }: { item: Voucher }) => (
+    <TouchableOpacity 
+      style={styles.voucherItem} 
+      onPress={() => handleSelectVoucher(item)}
+    >
+      <View style={styles.voucherIconContainer}>
+        <Ionicons name="pricetag" size={24} color={theme.colors.primary} />
+      </View>
+      <View style={styles.voucherContent}>
+        <View style={styles.voucherHeader}>
+          <Text style={styles.voucherCode}>{item.voucher.code}</Text>
+          <Text style={styles.voucherValue}>
+            {item.voucher.discount_type === "phần trăm" 
+              ? `Giảm ${item.voucher.discount_value}%` 
+              : `Giảm ${formatPrice(Number(item.voucher.discount_value))}`}
+          </Text>
+        </View>
+        <Text style={styles.voucherDescription} numberOfLines={2}>{item.voucher.description}</Text>
+        <View style={styles.voucherFooter}>
+          <Text style={styles.voucherExpiry}>
+            HSD: {new Date(item.voucher.end_date).toLocaleDateString('vi-VN')}
+          </Text>
+        </View>
+      </View>
+      <View style={styles.selectIconContainer}>
+        <Ionicons name="chevron-forward-outline" size={20} color="#9CA3AF" />
+      </View>
+    </TouchableOpacity>
+  )
 
   const totalAmount = calculateTotal()
-  // Calculate discount (example: 20% off)
-  const discount = 0 // percentage
-  const discountAmount = Math.round((totalAmount * discount) / 100)
+  const discountAmount = calculateDiscount()
   const finalAmount = totalAmount - discountAmount
 
   return (
@@ -159,18 +273,35 @@ export default function Step4({ formData, onUpdateFormData, onNext, onBack, isLo
             </View>
           </View>
 
-          {/* Discount Section */}
+          {/* Voucher Section */}
           <View style={styles.discountSection}>
             <View style={styles.discountBadge}>
               <Ionicons name="pricetag-outline" size={16} color={theme.colors.primary} />
             </View>
             <View style={styles.discountInfo}>
               <Text style={styles.discountTitle}>Mã giảm giá</Text>
-              <Text style={styles.discountCode}>GiamGia20 - {discount}.00%</Text>
+              {selectedVoucher ? (
+                <View style={styles.selectedVoucherContainer}>
+                  <Text style={styles.selectedVoucherCode}>{selectedVoucher.voucher.code}</Text>
+                  <Text style={styles.selectedVoucherValue}>
+                    {selectedVoucher.voucher.discount_type === "phần trăm" 
+                      ? `Giảm ${selectedVoucher.voucher.discount_value}%` 
+                      : `Giảm ${formatPrice(Number(selectedVoucher.voucher.discount_value))}`}
+                  </Text>
+                </View>
+              ) : (
+                <Text style={styles.discountCode}>Chọn mã giảm giá</Text>
+              )}
             </View>
-            <TouchableOpacity style={styles.applyButton}>
-              <Text style={styles.applyButtonText}>Áp dụng</Text>
-            </TouchableOpacity>
+            {selectedVoucher ? (
+              <TouchableOpacity style={styles.removeButton} onPress={handleRemoveVoucher}>
+                <Text style={styles.removeButtonText}>Xóa</Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity style={styles.applyButton} onPress={() => setVoucherModalVisible(true)}>
+                <Text style={styles.applyButtonText}>Chọn</Text>
+              </TouchableOpacity>
+            )}
           </View>
 
           {/* Price Summary */}
@@ -259,6 +390,55 @@ export default function Step4({ formData, onUpdateFormData, onNext, onBack, isLo
           </TouchableOpacity>
         </View>
       </View>
+
+      {/* Voucher Modal */}
+      <Modal
+        visible={voucherModalVisible}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={() => setVoucherModalVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Mã giảm giá của bạn</Text>
+              <TouchableOpacity onPress={() => setVoucherModalVisible(false)}>
+                <Ionicons name="close-circle" size={24} color="#111827" />
+              </TouchableOpacity>
+            </View>
+            
+            {vouchers.length === 0 && !loadingVouchers ? (
+              <View style={styles.emptyVoucherContainer}>
+                <Ionicons name="pricetag-outline" size={48} color="#d1d5db" />
+                <Text style={styles.emptyVoucherText}>Không có mã giảm giá</Text>
+              </View>
+            ) : (
+              <FlatList
+                data={vouchers}
+                renderItem={renderVoucherItem}
+                keyExtractor={item => item.voucher_id}
+                showsVerticalScrollIndicator={true}
+                contentContainerStyle={styles.voucherList}
+                onEndReached={loadMoreVouchers}
+                onEndReachedThreshold={0.5}
+                style={styles.voucherListContainer}
+                ListFooterComponent={
+                  loadingVouchers ? (
+                    <ActivityIndicator color={theme.colors.primary} style={styles.loadingIndicator} />
+                  ) : null
+                }
+              />
+            )}
+            
+            <TouchableOpacity 
+              style={styles.closeButton} 
+              onPress={() => setVoucherModalVisible(false)}
+            >
+              <Text style={styles.closeButtonText}>Đóng</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   )
 }
@@ -599,5 +779,146 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: {
     opacity: 0.6,
+  },
+  selectedVoucherContainer: {
+    flexDirection: 'column',
+  },
+  selectedVoucherCode: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: theme.colors.primary,
+  },
+  selectedVoucherValue: {
+    fontSize: 12,
+    color: '#6B7280',
+  },
+  removeButton: {
+    backgroundColor: '#EF4444',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 6,
+  },
+  removeButtonText: {
+    color: 'white',
+    fontWeight: '500',
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 20,
+    width: '90%',
+    maxWidth: 400,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+    maxHeight: '80%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+    marginBottom: 16,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  voucherListContainer: {
+    width: '100%',
+    maxHeight: 350,
+  },
+  voucherList: {
+    width: '100%',
+  },
+  voucherItem: {
+    flexDirection: 'row',
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+    width: '100%',
+  },
+  voucherIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#FEF3C7',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  voucherContent: {
+    flex: 1,
+  },
+  voucherHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  voucherCode: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  voucherValue: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: theme.colors.primary,
+  },
+  voucherDescription: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginBottom: 8,
+  },
+  voucherFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  voucherExpiry: {
+    fontSize: 12,
+    color: '#6B7280',
+  },
+  selectIconContainer: {
+    marginLeft: 10,
+    justifyContent: 'center',
+  },
+  loadingIndicator: {
+    padding: 16,
+  },
+  emptyVoucherContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  emptyVoucherText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: '#6B7280',
+  },
+  closeButton: {
+    marginTop: 20,
+    backgroundColor: '#f3f4f6',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    alignSelf: 'center',
+  },
+  closeButtonText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#4B5563',
   },
 })

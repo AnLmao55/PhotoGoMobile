@@ -109,11 +109,15 @@ export default function Step3({ formData, onUpdateFormData, onNext, onBack, isLo
   }
 
   const formatDateTime = () => {
-    if (!formData.bookingDateTime) return ""
-    const { date, time } = formData.bookingDateTime
-    const formattedDate = date.split("-").reverse().join("/")
-    return `${formattedDate} lúc ${time}`
-  }
+    if (!formData.bookingDateTime) return "";
+    if (formData.bookingDateTime.dates && formData.bookingDateTime.dates.length > 0) {
+      // Multi-day: show all dates
+      return formData.bookingDateTime.dates.map(date => date.split("-").reverse().join("/")).join(", ");
+    }
+    const { date, time } = formData.bookingDateTime;
+    const formattedDate = date.split("-").reverse().join("/");
+    return `${formattedDate} lúc ${time}`;
+  };
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
@@ -126,7 +130,9 @@ export default function Step3({ formData, onUpdateFormData, onNext, onBack, isLo
             <Text style={[styles.selectedConceptPrice, { color: theme.colors.primary }]}>
               {formatPrice(Number.parseFloat(formData.selectedConcept.price))}
             </Text>
-            {formData.bookingDateTime && <Text style={styles.selectedDateTime}>📅 {formatDateTime()}</Text>}
+            {formData.bookingDateTime && (
+              <Text style={styles.selectedDateTime}>📅 {formatDateTime()}</Text>
+            )}
           </View>
         )}
 

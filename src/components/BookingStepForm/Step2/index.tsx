@@ -33,6 +33,12 @@ export default function Step2({
   const [loadingDates, setLoadingDates] = useState(false)
   const [loadingSlots, setLoadingSlots] = useState(false)
 
+  // Helper to check if selected concept is multi-day
+  const isMultiDayConcept = !!formData.selectedConcept && !!formData.selectedConcept.numberOfDays && formData.selectedConcept.numberOfDays > 1;
+
+  // For multi-day, store an array of selected dates
+  const [selectedDates, setSelectedDates] = useState<string[]>([]);
+
   // Get first location ID from vendor data
   const getLocationId = () => {
     return vendorData?.locations?.[0]?.id || ""
@@ -152,31 +158,62 @@ export default function Step2({
   }
 
   const handleDateSelect = (date: string) => {
-    setSelectedDate(date)
-    setSelectedTime("")
-    setSelectedSlotId("")
-  }
+    const isMultiDay = !!formData.selectedConcept && formData.selectedConcept.numberOfDays && formData.selectedConcept.numberOfDays > 1;
+    if (isMultiDay && formData.selectedConcept) {
+      // Auto-select a range of consecutive days
+      const start = new Date(date);
+      const days: string[] = [];
+      for (let i = 0; i < formData.selectedConcept.numberOfDays!; i++) {
+        const d = new Date(start);
+        d.setDate(start.getDate() + i);
+        days.push(d.toISOString().split('T')[0]);
+      }
+      setSelectedDates(days);
+      onUpdateFormData({
+        bookingDateTime: {
+          dates: days,
+          date: '',
+          time: '',
+        },
+        bookingType: 'nhiều ngày',
+      });
+    } else {
+      setSelectedDate(date);
+      setSelectedTime("");
+      setSelectedSlotId("");
+      onUpdateFormData({ bookingType: 'một ngày' });
+    }
+  };
 
   const handleTimeSelect = (slot: SlotTimeWorkingDate) => {
-    const timeString = formatTimeSlot(slot.startSlotTime)
-    setSelectedTime(timeString)
-    setSelectedSlotId(slot.id)
+    if (isMultiDayConcept) return; // Do nothing for multi-day
+    const timeString = formatTimeSlot(slot.startSlotTime);
+    setSelectedTime(timeString);
+    setSelectedSlotId(slot.id);
     onUpdateFormData({
       bookingDateTime: {
         date: selectedDate,
         time: timeString,
         slotId: slot.id,
       },
-    })
-  }
+    });
+  };
 
   const handleNext = () => {
-    if (!selectedDate || !selectedTime) {
-      Alert.alert("Lỗi", "Vui lòng chọn ngày và giờ")
-      return
+    if (isMultiDayConcept && formData.selectedConcept && formData.selectedConcept.numberOfDays) {
+      if (selectedDates.length !== formData.selectedConcept.numberOfDays) {
+        Alert.alert("Lỗi", `Vui lòng chọn đủ ${formData.selectedConcept.numberOfDays} ngày cho concept này`);
+        return;
+      }
+      onNext();
+    } else {
+      if (!selectedDate || !selectedTime) {
+        Alert.alert("Lỗi", "Vui lòng chọn ngày và giờ");
+        return;
+      }
+      onNext();
     }
-    onNext()
-  }
+  };
 
   const isDateAvailable = (date: string) => {
     if (!locationAvailability) return false
@@ -211,7 +248,7 @@ export default function Step2({
       const date = `${currentYear}-${currentMonth.toString().padStart(2, "0")}-${day.toString().padStart(2, "0")}`
       const isPast = isPastDate(date)
       const isTodayDate = isToday(date)
-      const isSelected = selectedDate === date
+      const isSelected = isMultiDayConcept ? selectedDates.includes(date) : selectedDate === date;
       const isAvailable = isDateAvailable(date)
 
       const dayStyle: any[] = [styles.dayCell]
@@ -244,6 +281,7 @@ export default function Step2({
           style={dayStyle}
           onPress={() => !isPast && isAvailable && handleDateSelect(date)}
           disabled={isPast || !isAvailable}
+          activeOpacity={isSelected ? 0.7 : 1}
         >
           <Text style={textStyle}>{day}</Text>
           {icon}
@@ -403,25 +441,26 @@ export default function Step2({
           </View>
 
           {/* Time Selection */}
-          <View style={styles.timeSection}>
-            <Text style={styles.sectionTitle}>
-              Chọn khung giờ {selectedDate && `- ${convertInternalDateToDisplay(selectedDate)}`}
-            </Text>
-
-            {selectedDate ? (
-              <ScrollView
-                style={styles.timeSlotContainer}
-                showsVerticalScrollIndicator={false} // Enable scroll indicator for debugging
-                nestedScrollEnabled={true} // Enable nested scrolling
-              >
-                {renderTimeSlots()}
-              </ScrollView>
-            ) : (
-              <View style={styles.noDateSelected}>
-                <Text style={styles.noDateSelectedText}>Vui lòng chọn ngày trước</Text>
-              </View>
-            )}
-          </View>
+          {!isMultiDayConcept && (
+            <View style={styles.timeSection}>
+              <Text style={styles.sectionTitle}>
+                Chọn khung giờ {selectedDate && `- ${convertInternalDateToDisplay(selectedDate)}`}
+              </Text>
+              {selectedDate ? (
+                <ScrollView
+                  style={styles.timeSlotContainer}
+                  showsVerticalScrollIndicator={false}
+                  nestedScrollEnabled={true}
+                >
+                  {renderTimeSlots()}
+                </ScrollView>
+              ) : (
+                <View style={styles.noDateSelected}>
+                  <Text style={styles.noDateSelectedText}>Vui lòng chọn ngày trước</Text>
+                </View>
+              )}
+            </View>
+          )}
         </View>
 
         {/* Order Summary */}
@@ -443,19 +482,21 @@ export default function Step2({
           </TouchableOpacity>
           <TouchableOpacity
             onPress={handleNext}
-            disabled={isLoading || !selectedDate || !selectedTime}
+            disabled={isLoading || (isMultiDayConcept && formData.selectedConcept && formData.selectedConcept.numberOfDays ? selectedDates.length !== formData.selectedConcept.numberOfDays : !selectedDate || !selectedTime)}
             style={[
               styles.primaryButton,
               { backgroundColor: theme.colors.primary },
-              (isLoading || !selectedDate || !selectedTime) && styles.buttonDisabled,
+              (isLoading || (isMultiDayConcept && formData.selectedConcept && formData.selectedConcept.numberOfDays ? selectedDates.length !== formData.selectedConcept.numberOfDays : !selectedDate || !selectedTime)) && styles.buttonDisabled,
             ]}
           >
             <Text style={styles.primaryButtonText}>
               {isLoading
                 ? "Đang xử lý..."
-                : !selectedDate || !selectedTime
-                  ? "Vui lòng chọn ngày và giờ"
-                  : "Tiếp tục →"}
+                : isMultiDayConcept && formData.selectedConcept && formData.selectedConcept.numberOfDays
+                  ? `Tiếp tục → (${selectedDates.length}/${formData.selectedConcept.numberOfDays})`
+                  : !selectedDate || !selectedTime
+                    ? "Vui lòng chọn ngày và giờ"
+                    : "Tiếp tục →"}
             </Text>
           </TouchableOpacity>
         </View>

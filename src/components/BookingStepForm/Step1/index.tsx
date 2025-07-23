@@ -46,8 +46,17 @@ export default function Step1({ formData, onUpdateFormData, onNext, isLoading, v
   }
 
   const handleConceptSelect = (concept: any) => {
-    onUpdateFormData({ selectedConcept: concept })
-  }
+    // If concept is multi-day, set bookingDateTime with an array of dates (numberOfDays)
+    if (concept.conceptRangeType === 'nhiều ngày' && concept.numberOfDays > 1) {
+      // Reset bookingDateTime, Step2 will handle date selection for multiple days
+      onUpdateFormData({
+        selectedConcept: concept,
+        bookingDateTime: undefined, // clear previous selection
+      });
+    } else {
+      onUpdateFormData({ selectedConcept: concept, bookingDateTime: undefined });
+    }
+  };
 
   const calculateTotal = () => {
     return formData.selectedConcept ? Number.parseFloat(formData.selectedConcept.price) : 0
