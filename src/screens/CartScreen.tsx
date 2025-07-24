@@ -59,7 +59,7 @@ const CartScreen = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [totalPrice, setTotalPrice] = useState(0);
-  const [selectedItems, setSelectedItems] = useState<{[key: string]: boolean}>({});
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const navigation = useNavigation<any>();
   const { customAlert } = useAlert();
 
@@ -113,15 +113,14 @@ const CartScreen = () => {
         const items = response.data.data.data;
         setCartItems(items);
         
-        // Initialize all items as selected
-        const initialSelectedState: {[key: string]: boolean} = {};
-        items.forEach(item => {
-          initialSelectedState[item.id] = true;
-        });
-        setSelectedItems(initialSelectedState);
-        
-        // Calculate total price for all items
-        calculateTotal(items, initialSelectedState);
+        // Select the first item by default if there are items
+        if (items.length > 0) {
+          setSelectedItemId(items[0].id);
+          calculateTotal(items[0].id);
+        } else {
+          setSelectedItemId(null);
+          setTotalPrice(0);
+        }
       }
     } catch (error: any) {
       console.error('Error fetching cart items:', error);
@@ -138,37 +137,23 @@ const CartScreen = () => {
     }
   };
 
-  const calculateTotal = (items: CartItem[], selected: {[key: string]: boolean}) => {
-    const total = items.reduce((sum, item) => {
-      if (selected[item.id]) {
-        return sum + parseFloat(item.serviceConcept.price);
-      }
-      return sum;
-    }, 0);
+  const calculateTotal = (itemId: string | null) => {
+    if (!itemId) {
+      setTotalPrice(0);
+      return;
+    }
     
-    setTotalPrice(total);
+    const item = cartItems.find(item => item.id === itemId);
+    if (item) {
+      setTotalPrice(parseFloat(item.serviceConcept.price));
+    } else {
+      setTotalPrice(0);
+    }
   };
 
-  const toggleItemSelection = (itemId: string) => {
-    const updatedSelection = {
-      ...selectedItems,
-      [itemId]: !selectedItems[itemId]
-    };
-    
-    setSelectedItems(updatedSelection);
-    calculateTotal(cartItems, updatedSelection);
-  };
-
-  const toggleSelectAll = () => {
-    const allSelected = cartItems.every(item => selectedItems[item.id]);
-    const newState: {[key: string]: boolean} = {};
-    
-    cartItems.forEach(item => {
-      newState[item.id] = !allSelected;
-    });
-    
-    setSelectedItems(newState);
-    calculateTotal(cartItems, newState);
+  const selectItem = (itemId: string) => {
+    setSelectedItemId(itemId);
+    calculateTotal(itemId);
   };
 
   const handleRemoveItem = async (itemId: string) => {
@@ -217,12 +202,16 @@ const CartScreen = () => {
             const updatedItems = cartItems.filter(item => item.id !== itemId);
             setCartItems(updatedItems);
             
-            // Recalculate total
-            const newTotal = updatedItems.reduce((sum, item) => {
-              return sum + parseFloat(item.serviceConcept.price);
-            }, 0);
-            
-            setTotalPrice(newTotal);
+            // Update selection if needed
+            if (selectedItemId === itemId) {
+              if (updatedItems.length > 0) {
+                setSelectedItemId(updatedItems[0].id);
+                calculateTotal(updatedItems[0].id);
+              } else {
+                setSelectedItemId(null);
+                setTotalPrice(0);
+              }
+            }
             
             customAlert('Thành công', 'Đã xóa dịch vụ khỏi giỏ hàng');
           } catch (error: any) {
@@ -240,21 +229,26 @@ const CartScreen = () => {
   };
 
   const handleCheckout = () => {
-    const selectedConcepts = cartItems.filter(item => selectedItems[item.id]);
-    
-    if (selectedConcepts.length === 0) {
-      customAlert('Thông báo', 'Vui lòng chọn ít nhất một dịch vụ để đặt lịch');
+    if (!selectedItemId) {
+      customAlert('Thông báo', 'Vui lòng chọn một dịch vụ để đặt lịch');
       return;
     }
     
-    // Navigate to booking screen with selected concepts
+    const selectedConcept = cartItems.find(item => item.id === selectedItemId);
+    
+    if (!selectedConcept) {
+      customAlert('Thông báo', 'Không tìm thấy dịch vụ đã chọn');
+      return;
+    }
+    
+    // Navigate to booking screen with selected concept
     navigation.navigate('Booking', { 
       fromCart: true,
-      selectedConcepts: selectedConcepts.map(item => ({
-        id: item.serviceConceptId,
-        name: item.serviceConcept.name,
-        price: item.serviceConcept.price
-      }))
+      selectedConcepts: [{
+        id: selectedConcept.serviceConceptId,
+        name: selectedConcept.serviceConcept.name,
+        price: selectedConcept.serviceConcept.price
+      }]
     });
   };
 
@@ -283,13 +277,21 @@ const CartScreen = () => {
   const renderCartItem = ({ item }: { item: CartItem }) => {
     const concept = item.serviceConcept;
     const price = parseFloat(concept.price);
-    const isSelected = selectedItems[item.id] || false;
+    const isSelected = selectedItemId === item.id;
+    
+    // Helper to safely get image URL from potentially different formats
+    const getImageUrl = (image: any): string => {
+      if (typeof image === 'string') {
+        return image;
+      }
+      return image && typeof image === 'object' && 'imageUrl' in image ? image.imageUrl : '';
+    };
     
     return (
       <View style={styles.cartItem}>
         <TouchableOpacity 
           style={styles.checkboxContainer}
-          onPress={() => toggleItemSelection(item.id)}
+          onPress={() => selectItem(item.id)}
         >
           <View style={[
             styles.checkbox,
@@ -302,7 +304,7 @@ const CartScreen = () => {
         <View style={styles.imageContainer}>
           {concept.images && concept.images.length > 0 ? (
             <Image 
-              source={{ uri: concept.images[0] }} 
+              source={{ uri: getImageUrl(concept.images[0]) }} 
               style={styles.conceptImage}
               resizeMode="cover"
             />
@@ -341,9 +343,6 @@ const CartScreen = () => {
     );
   };
 
-  const hasSelectedItems = cartItems.some(item => selectedItems[item.id]);
-  const allItemsSelected = cartItems.length > 0 && cartItems.every(item => selectedItems[item.id]);
-
   return (
     <SafeAreaView style={styles.container}>
       {isLoading && !refreshing ? (
@@ -352,23 +351,6 @@ const CartScreen = () => {
         </View>
       ) : (
         <>
-          {cartItems.length > 0 && (
-            <View style={styles.selectAllContainer}>
-              <TouchableOpacity 
-                style={styles.selectAllButton}
-                onPress={toggleSelectAll}
-              >
-                <View style={[
-                  styles.checkbox,
-                  allItemsSelected && styles.checkboxSelected
-                ]}>
-                  {allItemsSelected && <Ionicons name="checkmark" size={16} color="#fff" />}
-                </View>
-                <Text style={styles.selectAllText}>Chọn tất cả</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-          
           <FlatList
             data={cartItems}
             renderItem={renderCartItem}
@@ -392,7 +374,7 @@ const CartScreen = () => {
               <View style={styles.totalContainer}>
                 <View style={styles.selectedCountContainer}>
                   <Text style={styles.selectedCountText}>
-                    Đã chọn: {Object.values(selectedItems).filter(Boolean).length}/{cartItems.length}
+                    Đã chọn: 1/{cartItems.length}
                   </Text>
                 </View>
                 <View>
@@ -404,10 +386,10 @@ const CartScreen = () => {
               <TouchableOpacity 
                 style={[
                   styles.checkoutButton,
-                  !hasSelectedItems && styles.checkoutButtonDisabled
+                  !selectedItemId && styles.checkoutButtonDisabled
                 ]}
                 onPress={handleCheckout}
-                disabled={!hasSelectedItems}
+                disabled={!selectedItemId}
               >
                 <Text style={styles.checkoutButtonText}>Đặt lịch</Text>
                 <Ionicons name="arrow-forward" size={20} color="#fff" style={styles.checkoutIcon} />

@@ -17,6 +17,7 @@ import RenderHtml from 'react-native-render-html';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { useAlert } from '../components/Alert/AlertContext';
+import { useCart } from '../components/Alert/CartContext';
 
 const { width } = Dimensions.get('window');
 
@@ -57,6 +58,7 @@ const ConceptViewer = () => {
     slug: string;
   };
   const { customAlert } = useAlert();
+  const { refreshCart } = useCart();
   
   const [selectedConceptIndex, setSelectedConceptIndex] = useState(0);
   const [isConceptListVisible, setIsConceptListVisible] = useState(false);
@@ -172,6 +174,9 @@ const ConceptViewer = () => {
       );
       
       if (response.status === 200 || response.status === 201) {
+        // Refresh the cart count after successfully adding item
+        await refreshCart();
+        
         customAlert(
           'Thành công',
           `Đã thêm "${concept.name}" vào giỏ hàng`,

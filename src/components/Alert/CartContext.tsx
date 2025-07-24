@@ -6,6 +6,7 @@ type CartContextType = {
   cartItemCount: number;
   refreshCart: () => Promise<void>;
   isLoading: boolean;
+  subscribeToCartChanges: (callback: () => void) => () => void;
 };
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -19,6 +20,8 @@ export const useCart = () => {
 export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [cartItemCount, setCartItemCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  // Store callbacks in a ref so they persist across renders
+  const subscribersRef = React.useRef(new Set<() => void>());
 
   const fetchCartItemCount = async () => {
     try {
@@ -62,6 +65,10 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       setCartItemCount(0);
     } finally {
       setIsLoading(false);
+      // Notify all subscribers after cart is updated
+      subscribersRef.current.forEach(cb => {
+        try { cb(); } catch (e) { console.error('Cart subscriber error:', e); }
+      });
     }
   };
 
@@ -75,12 +82,22 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     return () => clearInterval(intervalId);
   }, []);
 
+  // Subscription function
+  const subscribeToCartChanges = (callback: () => void) => {
+    subscribersRef.current.add(callback);
+    // Return unsubscribe function
+    return () => {
+      subscribersRef.current.delete(callback);
+    };
+  };
+
   return (
     <CartContext.Provider 
       value={{ 
         cartItemCount,
         refreshCart: fetchCartItemCount,
-        isLoading
+        isLoading,
+        subscribeToCartChanges
       }}
     >
       {children}
