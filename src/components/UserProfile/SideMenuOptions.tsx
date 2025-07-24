@@ -20,6 +20,18 @@ const SideMenuOptions: React.FC<SideMenuOptionsProps> = ({
 }) => {
   const menuOptions: MenuOption[] = [
     {
+      key: "upcoming-workshops",
+      label: "Lịch sắp tới",
+      icon: "calendar-outline",
+      onPress: () => onOptionSelect("orders"),
+    },
+    {
+      key: "orders",
+      label: "Đơn hàng",
+      icon: "receipt-outline",
+      onPress: () => onOptionSelect("orders"),
+    },
+    {
       key: "discount",
       label: "Mã ưu đãi",
       icon: "ticket-outline",
@@ -31,36 +43,31 @@ const SideMenuOptions: React.FC<SideMenuOptionsProps> = ({
       icon: "star-outline",
       onPress: () => onOptionSelect("points"),
     },
-    {
-      key: "rewards",
-      label: "PhotoGo Rewards",
-      icon: "gift-outline",
-      onPress: () => onOptionSelect("rewards"),
-    },
-    {
-      key: "attendance",
-      label: "Điểm danh",
-      icon: "calendar-outline",
-      onPress: () => onOptionSelect("attendance"),
-    },
-    {
-      key: "orders",
-      label: "Đơn hàng",
-      icon: "receipt-outline",
-      onPress: () => onOptionSelect("orders"),
-    },
+    // {
+    //   key: "rewards",
+    //   label: "PhotoGo Rewards",
+    //   icon: "gift-outline",
+    //   onPress: () => onOptionSelect("rewards"),
+    // },
+    // {
+    //   key: "attendance",
+    //   label: "Điểm danh",
+    //   icon: "calendar-outline",
+    //   onPress: () => onOptionSelect("attendance"),
+    // },
+    
     {
       key: "reviews",
       label: "Đánh giá",
       icon: "star-half-outline",
       onPress: () => onOptionSelect("reviews"),
     },
-    {
-      key: "favorites",
-      label: "Yêu thích",
-      icon: "heart-outline",
-      onPress: () => onOptionSelect("favorites"),
-    },
+    // {
+    //   key: "favorites",
+    //   label: "Yêu thích",
+    //   icon: "heart-outline",
+    //   onPress: () => onOptionSelect("favorites"),
+    // },
     {
       key: "password",
       label: "Thay đổi mật khẩu",
