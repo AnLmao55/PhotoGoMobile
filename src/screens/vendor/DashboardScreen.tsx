@@ -21,7 +21,7 @@ const DashboardScreen: React.FC = () => {
       <View style={styles.statsContainer}>
         <View style={styles.statCard}>
           <Text style={styles.statNumber}>12</Text>
-          <Text style={styles.statLabel}>Đơn hàng</Text>
+          <Text style={styles.statLabel}>Lịch hẹn</Text>
         </View>
         <View style={styles.statCard}>
           <Text style={styles.statNumber}>5</Text>
@@ -33,12 +33,12 @@ const DashboardScreen: React.FC = () => {
         </View>
       </View>
 
-      <Text style={styles.sectionTitle}>Đơn hàng gần đây</Text>
+      <Text style={styles.sectionTitle}>Lịch hẹn gần đây</Text>
       
       {[1, 2, 3].map((item) => (
         <View key={item} style={styles.orderCard}>
           <View style={styles.orderHeader}>
-            <Text style={styles.orderNumber}>Đơn hàng #{item}00{item}</Text>
+            <Text style={styles.orderNumber}>Lịch hẹn #{item}00{item}</Text>
             <View style={[styles.statusBadge, { backgroundColor: item === 1 ? '#FFC107' : '#4CAF50' }]}>
               <Text style={styles.statusText}>{item === 1 ? 'Đang xử lý' : 'Hoàn thành'}</Text>
             </View>

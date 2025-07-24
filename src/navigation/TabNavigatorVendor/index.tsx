@@ -5,10 +5,10 @@ import { View, Text, StyleSheet } from 'react-native';
 import { theme } from '../../theme/theme';
 import DashboardScreen from '../../screens/vendor/DashboardScreen';
 import ProfileScreen from '../../screens/vendor/ProfileScreen';
+import ScheduleScreen from '../../screens/vendor/ScheduleScreen';
 
 // Placeholder screens - these would be replaced with actual screens
 const ServicesScreen = () => <View style={styles.screen}><Text>Services</Text></View>;
-const OrdersScreen = () => <View style={styles.screen}><Text>Orders</Text></View>;
 const StatsScreen = () => <View style={styles.screen}><Text>Statistics</Text></View>;
 
 const Tab = createBottomTabNavigator();
@@ -24,8 +24,8 @@ const TabNavigatorVendor: React.FC = () => {
             icon = <Ionicons name="home-outline" size={size} color={color} />;
           } else if (route.name === 'Services') {
             icon = <MaterialIcons name="category" size={size} color={color} />;
-          } else if (route.name === 'Orders') {
-            icon = <FontAwesome5 name="clipboard-list" size={size} color={color} />;
+          } else if (route.name === 'Schedule') {
+            icon = <Ionicons name="calendar-outline" size={size} color={color} />;
           } else if (route.name === 'Statistics') {
             icon = <Ionicons name="stats-chart-outline" size={size} color={color} />;
           } else if (route.name === 'Profile') {
@@ -79,11 +79,11 @@ const TabNavigatorVendor: React.FC = () => {
         }}
       />
       <Tab.Screen 
-        name="Orders" 
-        component={OrdersScreen}
+        name="Schedule" 
+        component={ScheduleScreen}
         options={{
-          tabBarLabel: "Đơn hàng",
-          title: "Quản lý đơn hàng"
+          tabBarLabel: "Lịch",
+          title: "Lịch làm việc"
         }}
       />
       <Tab.Screen 
