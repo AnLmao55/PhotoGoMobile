@@ -19,6 +19,21 @@ import { CartProvider } from './src/components/Alert/CartContext';
 import RegisterScreen from './src/screens/RegisterScreen';
 import ConceptViewer from './src/screens/ConceptViewer';
 import VendorOwnerDashboard from './src/screens/VendorOwnerDashboard';
+import UpcomingWorkshopsScreen from './src/screens/UpcomingWorkshopsScreen';
+import { LogBox } from 'react-native';
+
+// Set environment variables
+import { Platform } from 'react-native';
+import UpcomingWorkshopsScreenDetail from './src/screens/UpcomingWorkshopsScreenDetail';
+
+if (Platform.OS !== 'web') {
+  process.env.EXPO_PUBLIC_API_URL = 'https://api.photogo.id.vn/api/v1';
+}
+
+// Ignore specific warnings (optional)
+LogBox.ignoreLogs([
+  'Non-serializable values were found in the navigation state',
+]);
 
 const Stack = createStackNavigator();
 
@@ -86,6 +101,18 @@ export default function App() {
                 <Stack.Screen name='OrderDetail' component={OrderDetail}
                   options={{
                     title: 'Chi tiết đơn hàng',
+                    headerShown: true
+                  }}
+                />
+                <Stack.Screen name='UpcomingWorkshops' component={UpcomingWorkshopsScreen}
+                  options={{
+                    title: 'Lịch chụp hình',
+                    headerShown: true
+                  }}
+                />
+                <Stack.Screen name='UpcomingWorkshopsScreenDetail' component={UpcomingWorkshopsScreenDetail}
+                  options={{
+                    title: 'Chi tiết buổi chụp hình',
                     headerShown: true
                   }}
                 />

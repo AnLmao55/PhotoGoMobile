@@ -32,6 +32,7 @@ type RootStackParamList = {
   MainTabs: undefined;
   Register: undefined;
   MyOrder: undefined;
+  UpcomingWorkshops: undefined;
   // Add other screens as needed
 };
 
@@ -46,11 +47,20 @@ interface MenuOption {
 
 const UserProfileScreen: React.FC = () => {
   const navigation = useNavigation<ProfileScreenNavigationProp>();
-  const { userProfile, isLoading: profileLoading, error, refreshUserProfile } = useUserProfile();
+  const { 
+    userProfile, 
+    isLoading: profileLoading, 
+    error, 
+    refreshUserProfile, 
+    subscriptionPlans, 
+    isLoadingPlans, 
+    subscribeToPlan 
+  } = useUserProfile();
 
   const [selectedOption, setSelectedOption] = useState<string | undefined>(undefined);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [isPasswordModalVisible, setIsPasswordModalVisible] = useState(false);
+  const [isSubscribing, setIsSubscribing] = useState(false);
   
   const [editFormData, setEditFormData] = useState({
     fullName: "",
@@ -70,10 +80,11 @@ const UserProfileScreen: React.FC = () => {
 
   // Define menu options
   const menuOptions: MenuOption[] = [
-    { key: "discount", label: "Mã ưu đãi", icon: "ticket-outline" },
-    { key: "points", label: "Điểm tích lũy", icon: "star-outline" },
-    { key: "rewards", label: "PhotoGo Rewards", icon: "gift-outline" },
-    { key: "attendance", label: "Điểm danh", icon: "calendar-outline" },
+    // { key: "discount", label: "Mã ưu đãi", icon: "ticket-outline" },
+    // { key: "points", label: "Điểm tích lũy", icon: "star-outline" },
+    // { key: "rewards", label: "PhotoGo Rewards", icon: "gift-outline" },
+    // { key: "attendance", label: "Điểm danh", icon: "calendar-outline" },
+    { key: "upcoming-workshops", label: "Lịch chụp hình", icon: "calendar-outline" },
     { key: "orders", label: "Đơn hàng", icon: "receipt-outline" },
     { key: "reviews", label: "Đánh giá", icon: "star-half-outline" },
     // { key: "favorites", label: "Yêu thích", icon: "heart-outline" },
@@ -265,8 +276,20 @@ const UserProfileScreen: React.FC = () => {
     }
   };
 
-  const handleBuyPlan = () => {
-    Alert.alert("Mua gói", "Tính năng đang được phát triển!");
+  const handleBuyPlan = async () => {
+    if (!subscriptionPlans || subscriptionPlans.length === 0) return;
+    
+    try {
+      setIsSubscribing(true);
+      await subscribeToPlan(subscriptionPlans[0].id);
+      refreshUserProfile();
+      Alert.alert('Thành công', 'Bạn đã đăng ký gói thành công!');
+    } catch (error) {
+      console.error('Error subscribing to plan:', error);
+      Alert.alert('Lỗi', 'Không thể đăng ký gói. Vui lòng thử lại sau.');
+    } finally {
+      setIsSubscribing(false);
+    }
   };
 
   const handleOptionSelect = (key: string) => {
@@ -279,6 +302,9 @@ const UserProfileScreen: React.FC = () => {
         break;
       case "password":
         handleShowPasswordModal();
+        break;
+      case "upcoming-workshops":
+        navigation.navigate("UpcomingWorkshops");
         break;
       default:
         Alert.alert("Thông báo", "Tính năng đang được phát triển");
@@ -341,6 +367,17 @@ const UserProfileScreen: React.FC = () => {
     );
   }
 
+  // Format date to display in DD/MM/YYYY format
+  const formatDate = (dateString: string) => {
+    if (!dateString) return "14/7/2025";
+    const date = new Date(dateString);
+    return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
+  };
+
+  const registrationDate = userProfile.createdAt 
+    ? formatDate(userProfile.createdAt) 
+    : "14/7/2025";
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -369,12 +406,31 @@ const UserProfileScreen: React.FC = () => {
           fullName={userProfile.fullName || "User"}
           phone={userProfile.phoneNumber || ""}
           email={userProfile.email || ""}
-          registrationDate="14/7/2025"
+          registrationDate={registrationDate}
           onEdit={handleEditProfile}
         />
         
         {/* Premium Plan Card */}
-        <PremiumPlanCard onBuyPlan={handleBuyPlan} />
+        {isLoadingPlans ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="small" color="#F8B26A" />
+            <Text style={styles.loadingText}>Đang tải gói đăng ký...</Text>
+          </View>
+        ) : (
+          subscriptionPlans && subscriptionPlans.length > 0 && (
+            <PremiumPlanCard 
+              plan={subscriptionPlans[0]} 
+              onBuyPlan={handleBuyPlan} 
+            />
+          )
+        )}
+        
+        {isSubscribing && (
+          <View style={styles.subscribingOverlay}>
+            <ActivityIndicator size="large" color="#FFFFFF" />
+            <Text style={styles.subscribingText}>Đang xử lý đăng ký...</Text>
+          </View>
+        )}
         
         {/* Logout Button */}
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
@@ -576,6 +632,38 @@ const styles = StyleSheet.create({
   selectedMenuItemText: {
     color: '#F8B26A',
     fontWeight: '600',
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+    marginHorizontal: 16,
+    paddingVertical: 40,
+    borderRadius: 8,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#F0F0F0',
+  },
+  loadingText: {
+    marginTop: 10,
+    color: '#666',
+    fontSize: 14,
+  },
+  subscribingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 100,
+  },
+  subscribingText: {
+    color: '#FFFFFF',
+    marginTop: 12,
+    fontSize: 16,
   },
   // Logout button
   logoutButton: {

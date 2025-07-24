@@ -4,9 +4,11 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
+  Image,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import { useUserProfile } from "../../contexts/UserProfileContext";
 
 interface UserProfileCardProps {
   name: string;
@@ -21,6 +23,9 @@ const UserProfileCard: React.FC<UserProfileCardProps> = ({
   avatarUrl,
   onUpdateProfile,
 }) => {
+  const { userProfile } = useUserProfile();
+  const hasSubscription = !!userProfile?.subscription;
+
   // Get initials from name for avatar
   const getInitials = (name: string) => {
     const names = name.split(' ');
@@ -30,34 +35,61 @@ const UserProfileCard: React.FC<UserProfileCardProps> = ({
     return name.substring(0, 2).toUpperCase();
   };
 
+  // Background colors based on subscription status
+  const gradientColors = hasSubscription
+    ? ['#2196f3', '#00bcd4', '#03a9f4'] as const // Blue gradient for subscribers
+    : ['#F8B26A', '#F69942', '#F57C00'] as const; // Orange gradient for non-subscribers
+
   return (
     <LinearGradient
-      colors={['#F8B26A', '#F69942', '#F57C00']}
+      colors={gradientColors}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={styles.container}
     >
       {/* Avatar Circle */}
       <View style={styles.avatarContainer}>
-        <Text style={styles.avatarText}>{getInitials(name)}</Text>
+        {avatarUrl ? (
+          <Image source={{ uri: avatarUrl }} style={styles.avatarImage} />
+        ) : (
+          <Text style={[
+            styles.avatarText, 
+            hasSubscription && { color: '#2196f3' }
+          ]}>
+            {getInitials(name)}
+          </Text>
+        )}
       </View>
       
       {/* User Name */}
       <Text style={styles.nameText}>{name}</Text>
       
       {/* Update Profile Button */}
-      <TouchableOpacity style={styles.updateButton} onPress={onUpdateProfile}>
-        <Text style={styles.updateButtonText}>Cập nhật thông tin cá nhân</Text>
-        <Ionicons name="chevron-forward" size={14} color="#333" />
-      </TouchableOpacity>
-      
-      {/* Registration Button */}
-      <TouchableOpacity style={styles.registerButton}>
-        <Text style={styles.registerButtonText}>Đăng ký ngay</Text>
+      <TouchableOpacity 
+        style={[
+          styles.updateButton, 
+          hasSubscription && styles.subscriberButton
+        ]} 
+        onPress={onUpdateProfile}
+      >
+        <Text style={[
+          styles.updateButtonText,
+          hasSubscription && { color: '#2196f3' }
+        ]}>
+          Cập nhật thông tin cá nhân
+        </Text>
+        <Ionicons name="chevron-forward" size={14} color={hasSubscription ? "#2196f3" : "#F57C00"} />
       </TouchableOpacity>
       
       {/* Subscription Label */}
-      <Text style={styles.subscriptionText}>Gói đăng cấp vippro</Text>
+      {hasSubscription && (
+        <View style={styles.subscriptionBadge}>
+          <Ionicons name="star" size={14} color="#FFFFFF" style={{marginRight: 4}} />
+          <Text style={styles.subscriptionBadgeText}>
+            {userProfile?.subscription?.plan?.name || userProfile?.subscription?.planDetails?.name || "Ultimated"}
+          </Text>
+        </View>
+      )}
     </LinearGradient>
   );
 };
@@ -78,6 +110,12 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     borderWidth: 2,
     borderColor: "rgba(255, 255, 255, 0.5)",
+    overflow: "hidden",
+  },
+  avatarImage: {
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
   },
   avatarText: {
     fontSize: 32,
@@ -102,36 +140,33 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     marginBottom: 10,
   },
+  subscriberButton: {
+    backgroundColor: "#FFFFFF",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 1.5,
+    elevation: 2,
+  },
   updateButtonText: {
     fontSize: 14,
     color: "#F57C00",
     marginRight: 4,
     fontWeight: "600",
   },
-  registerButton: {
-    backgroundColor: "#FFFFFF",
-    paddingVertical: 8,
-    paddingHorizontal: 20,
-    borderRadius: 20,
-    marginBottom: 10,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-    elevation: 2,
+  subscriptionBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(255,255,255,0.3)",
+    paddingVertical: 4,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+    marginTop: 6,
   },
-  registerButtonText: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: "#F57C00",
-  },
-  subscriptionText: {
-    fontSize: 14,
+  subscriptionBadgeText: {
+    fontSize: 12,
     color: "#FFFFFF",
-    marginBottom: 5,
-    textShadowColor: 'rgba(0, 0, 0, 0.2)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 1,
+    fontWeight: "600",
   },
 });
 

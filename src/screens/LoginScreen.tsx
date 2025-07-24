@@ -94,30 +94,25 @@ const LoginScreen: React.FC = () => {
   const handleGoogleLogin = async () => {
     try {
       setIsLoading(true);
+      await GoogleSignin.hasPlayServices();
       const userInfo = await GoogleSignin.signIn();
 
-      if (userInfo.user) {
+      if (userInfo) {
         // For Google login, we'll default to customer role since we don't have role info from Google
         const userData = {
-          id: userInfo.user.id,
-          email: userInfo.user.email,
-          name: userInfo.user.name || "",
-          picture: userInfo.user.photo || "",
-          given_name: userInfo.user.givenName || "",
-          family_name: userInfo.user.familyName || "",
-          email_verified: true,
+          id: userInfo.userId || "",
+          email: userInfo.email || "",
+          name: userInfo.displayName || userInfo.givenName || "",
+          picture: userInfo.photoURL || "",
           role: { id: "R001", name: "customer", description: "Customer role" }, // Default role for Google login
           loginMethod: "google",
           loginTime: new Date().toISOString(),
         };
 
-        const tokens = await GoogleSignin.getTokens();
-        const idToken = tokens.idToken;
-
         await AsyncStorage.multiSet([
           ["isLoggedIn", "true"],
           ["userData", JSON.stringify(userData)],
-          ["userToken", idToken || ""],
+          ["userToken", userInfo.idToken || ""],
           ["loginMethod", "google"],
         ]);
         
@@ -334,6 +329,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.md,
     marginBottom: theme.spacing.sm,
     backgroundColor: "#fff",
+    color: "#333", // Add text color so input is visible
   },
   forgot: {
     color: theme.colors.lightText,
