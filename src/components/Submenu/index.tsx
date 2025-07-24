@@ -17,11 +17,11 @@ interface SubmenuProps {
 
 const defaultItems: SubmenuItem[] = [
   { id: '1', label: 'Giảm giá', icon: 'pricetag' },
-  { id: '2', label: 'Trò chơi', icon: 'game-controller' },
-  { id: '3', label: 'Quay thưởng', icon: 'aperture-outline' },
-  { id: '4', label: 'Flash Sale', icon: 'flash' },
-  { id: '5', label: 'Ưu đãi', icon: 'gift' },
-  { id: '6', label: 'Mới', icon: 'star' },
+  // { id: '2', label: 'Trò chơi', icon: 'game-controller' },
+  { id: '2', label: 'Quay thưởng', icon: 'aperture-outline' },
+  // { id: '4', label: 'Flash Sale', icon: 'flash' },
+  { id: '3', label: 'Điểm tích lũy', icon: 'gift' },
+  // { id: '6', label: 'Mới', icon: 'star' },
   
 ];
 
