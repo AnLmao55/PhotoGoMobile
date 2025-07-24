@@ -34,7 +34,7 @@ const LoyaltyCard: React.FC<LoyaltyCardProps> = ({
         'Đồng': {
             gradientColors: ['#CD7F32', '#E3A95E', '#CD7F32'],
             cardStyle: styles.bronzeCard,
-            textColor: '#5E4C3E',
+            textColor: '#FFFFFF',
             iconName: 'shield-outline',
             progressColor: '#CD7F32'
         },
@@ -55,7 +55,7 @@ const LoyaltyCard: React.FC<LoyaltyCardProps> = ({
         'Kim Cương': {
             gradientColors: ['#B9F2FF', '#44C3E8', '#00A3E0'],
             cardStyle: styles.diamondCard,
-            textColor: '#00537A',
+            textColor: '#FFFFFF',
             iconName: 'diamond-outline',
             progressColor: '#00A3E0'
         }
@@ -99,7 +99,7 @@ const LoyaltyCard: React.FC<LoyaltyCardProps> = ({
                         {currentLevel}
                     </Text>
                 </View>
-
+{/* 
                 <Text style={[styles.points, { color: rankConfig.textColor }]}>
                     {`${currentPoints}/${totalPoints} điểm`}
                 </Text>
@@ -108,32 +108,34 @@ const LoyaltyCard: React.FC<LoyaltyCardProps> = ({
                     progress={progress} 
                     color={rankConfig.progressColor} 
                     style={styles.progressBar} 
-                />
+                /> */}
 
                 <View style={[styles.upgradeBox, { backgroundColor: `${rankConfig.textColor}15` }]}>
                     <Text style={[styles.upgradeText, { color: rankConfig.textColor }]}>
-                        Còn {nextLevelPoints} điểm nữa để lên hạng
+                        {/* Còn {nextLevelPoints} điểm nữa để lên hạng */}
+                        
                         <Text style={styles.upgradeLevel}> {nextLevelName}</Text>
                     </Text>
                 </View>
 
                 <View style={styles.benefitSection}>
                     <Text style={[styles.benefitTitle, { color: rankConfig.textColor }]}>Ưu đãi hiện tại:</Text>
-                    <Text style={[styles.benefit, { color: rankConfig.textColor }]}>• Giảm 10% cho mỗi lần đặt lịch</Text>
+                    {/* <Text style={[styles.benefit, { color: rankConfig.textColor }]}>• Giảm 10% cho mỗi lần đặt lịch</Text>
                     <Text style={[styles.benefit, { color: rankConfig.textColor }]}>• Ưu tiên đặt lịch với nhiếp ảnh gia nổi tiếng</Text>
-                    <Text style={[styles.benefit, { color: rankConfig.textColor }]}>• Tặng 1 album ảnh miễn phí mỗi năm</Text>
+                    <Text style={[styles.benefit, { color: rankConfig.textColor }]}>• Tặng 1 album ảnh miễn phí mỗi năm</Text> */}
                 </View>
 
-                <TouchableOpacity 
+                {/* <TouchableOpacity 
                     style={[styles.button, { borderColor: rankConfig.textColor }]} 
                     onPress={onSeeMore}
                 >
                     <Text style={[styles.buttonText, { color: rankConfig.textColor }]}>Xem thêm ưu đãi</Text>
-                </TouchableOpacity>
+                </TouchableOpacity> */}
             </View>
         </LinearGradient>
     );
 };
+
 
 const styles = StyleSheet.create({
     card: {
@@ -174,6 +176,7 @@ const styles = StyleSheet.create({
     title: {
         fontWeight: '700',
         fontSize: 16,
+        
     },
     levelContainer: {
         flexDirection: 'row',
