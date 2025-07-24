@@ -152,14 +152,22 @@ const OrderDetail = () => {
     switch (status.toLowerCase()) {
       case 'đã thanh toán một phần':
       case 'đã thanh toán':
-      case 'đã hoàn thành':
+      case 'hoàn thành':
         return '#4CAF50'; // Green
       case 'chờ thanh toán':
-      case 'chờ xử lý':
+      case 'chưa thanh toán':
+      case 'chưa trả tiền':
+      case 'unpaid':
         return '#FF9800'; // Orange
       case 'đã hủy':
       case 'thất bại':
+      case 'đã hủy - quá hạn thanh toán':
         return '#F44336'; // Red
+      case 'chờ xử lý':
+      case 'đang xử lý':
+        return '#2196F3'; // Blue
+      case 'đang chờ xác nhận':
+        return '#9C27B0'; // Purple
       default:
         return '#9E9E9E'; // Grey
     }
@@ -200,8 +208,8 @@ const OrderDetail = () => {
         {/* Order Status Card */}
         <View style={styles.card}>
           <View style={styles.statusHeader}>
-            <View style={[styles.statusBadge, { backgroundColor: getStatusColor(invoice.status) }]}>
-              <Text style={styles.statusText}>{invoice.status}</Text>
+            <View style={[styles.statusBadge, { backgroundColor: getStatusColor(invoice.booking.status) }]}> 
+              <Text style={styles.statusText}>{invoice.booking.status}</Text>
             </View>
             <Text style={styles.orderCode}>Mã đơn: {invoice.booking.code}</Text>
           </View>

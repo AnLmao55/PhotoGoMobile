@@ -22,6 +22,7 @@ export interface BookingDateTime {
   date: string // YYYY-MM-DD format
   time: string // HH:MM format
   slotId?: string // API slot ID
+  dates?: string[] // For multi-day concepts
 }
 
 export interface ServiceConcept {
@@ -36,6 +37,8 @@ export interface ServiceConcept {
     name: string
     description: string
   }>
+  conceptRangeType?: string // 'một ngày' | 'nhiều ngày'
+  numberOfDays?: number
 }
 
 export interface ServicePackage {
@@ -95,6 +98,7 @@ export interface PaymentFormData {
   selectedConcept?: ServiceConcept
   bookingDateTime?: BookingDateTime
   vendorData?: VendorData
+  bookingType?: string // 'một ngày' | 'nhiều ngày'
 }
 
 export interface StepProps {
@@ -130,6 +134,54 @@ export interface SlotTimeWorkingDate {
   maxParallelBookings: number
   alreadyBooked: number
   isAvailable: boolean
+}
+
+export interface Voucher {
+  voucher_id: string
+  user_id: string
+  status: string
+  from: string
+  assigned_at: string
+  used_at: string | null
+  user: {
+    id: string
+    email: string
+    fullName: string
+    // Other user fields...
+  }
+  voucher: {
+    id: string
+    code: string
+    description: string
+    discount_type: string
+    discount_value: string
+    minPrice: number
+    maxPrice: number
+    quantity: number
+    usedCount: number
+    type: string
+    point: number
+    start_date: string
+    end_date: string
+    status: string
+    created_at: string
+    updated_at: string
+  }
+  is_valid: boolean
+}
+
+export interface VoucherResponse {
+  statusCode: number
+  message: string
+  data: {
+    data: Voucher[]
+    pagination: {
+      current: number
+      pageSize: number
+      totalPage: number
+      totalItem: number
+    }
+  }
 }
 
 export interface LocationAvailability {

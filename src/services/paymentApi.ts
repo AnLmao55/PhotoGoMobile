@@ -159,10 +159,10 @@ export const paymentApi = {
           return
         }
 
-        const conceptPrice = paymentData.selectedConcept
+        let total = paymentData.selectedConcept
           ? Number.parseFloat(paymentData.selectedConcept.price)
           : 6500000
-        const paymentAmount = Math.round((conceptPrice * Number.parseInt(paymentData.paymentOption)) / 100)
+        const paymentAmount = Math.round((total * Number.parseInt(paymentData.paymentOption)) / 100)
 
         resolve({
           success: true,
@@ -172,6 +172,35 @@ export const paymentApi = {
         })
       }, 2000)
     })
+  },
+
+  // Fetch user vouchers
+  fetchUserVouchers: async (userId: string, page = 1, pageSize = 10): Promise<any> => {
+    try {
+      const accessToken = await AsyncStorage.getItem('access_token');
+      
+      if (!accessToken) {
+        throw new Error('Authentication token not found');
+      }
+      
+      const headers = {
+        'Authorization': `Bearer ${accessToken}`
+      };
+      
+      const response = await axios.get(
+        `${process.env.EXPO_PUBLIC_API_URL}/vouchers/user/${userId}?current=${page}&pageSize=${pageSize}&from=chi%E1%BA%BFn%20d%E1%BB%8Bch&status=c%C3%B3%20s%E1%BA%B5n&sortBy=maxPrice&sortDirection=desc`, 
+        { headers }
+      );
+      
+      if (response.data.statusCode === 200) {
+        return response.data;
+      } else {
+        throw new Error(response.data.message || "Failed to fetch user vouchers");
+      }
+    } catch (error) {
+      console.error("Error fetching user vouchers:", error);
+      throw error;
+    }
   },
 
   // Create booking and get payment link
@@ -198,13 +227,18 @@ export const paymentApi = {
       
       // Prepare request body - only include fields that have values
       const requestBody: Record<string, any> = {
-        bookingType: "một ngày"
+        bookingType: paymentData.bookingType || "một ngày"
       };
       
       // Only add fields that have values
-      if (bookingDate) requestBody.date = bookingDate;
-      if (paymentData.bookingDateTime?.time) requestBody.time = paymentData.bookingDateTime.time;
-      if (bookingDate) requestBody.schedules = [bookingDate];
+      if (paymentData.bookingType === 'nhiều ngày' && paymentData.bookingDateTime?.dates && paymentData.bookingDateTime.dates.length > 0) {
+        // Multi-day: send schedules as array, do not send date/time
+        requestBody.schedules = paymentData.bookingDateTime.dates.map(d => d.split('-').reverse().join('/'));
+      } else {
+        if (bookingDate) requestBody.date = bookingDate;
+        if (paymentData.bookingDateTime?.time) requestBody.time = paymentData.bookingDateTime.time;
+        if (bookingDate) requestBody.schedules = [bookingDate];
+      }
       
       requestBody.sourceType = "chiến dịch";
       
@@ -223,6 +257,7 @@ export const paymentApi = {
       if (paymentData.customerInfo.phone) requestBody.phone = paymentData.customerInfo.phone;
       if (paymentData.customerInfo.email) requestBody.email = paymentData.customerInfo.email;
       
+      // Send voucher_id instead of voucherCode
       if (paymentData.voucherCode) requestBody.voucherId = paymentData.voucherCode;
       
       console.log('Request body for booking:', requestBody);
