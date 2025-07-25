@@ -53,7 +53,7 @@ const DetailScreen: React.FC = () => {
                     <VoucherList />
                     <ServiceList studio={studio} />
                     <WorkList studio={studio} />
-                    <ReviewList />
+                    <ReviewList studio={studio} />
                 </ScrollView>
 
                 <View style={styles.stickyButtonContainer}>
