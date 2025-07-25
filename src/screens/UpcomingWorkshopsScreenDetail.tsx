@@ -1,6 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
-import { Ionicons, MaterialIcons, FontAwesome5 } from '@expo/vector-icons';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  ScrollView, 
+  TouchableOpacity, 
+  ActivityIndicator, 
+  Image, 
+  FlatList, 
+  Linking, 
+  Alert,
+  Modal,
+  TextInput
+} from 'react-native';
+import { Ionicons, MaterialIcons, FontAwesome5, AntDesign } from '@expo/vector-icons';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
@@ -22,6 +35,7 @@ interface Payment {
   updatedAt: string;
 }
 
+// Cập nhật interface Invoice để thêm location và vendor
 interface Invoice {
   id: string;
   bookingId: string;
@@ -38,6 +52,7 @@ interface Invoice {
   status: string;
   issuedAt: string;
   updatedAt: string;
+  isReview: boolean; // Thêm thuộc tính isReview
   booking: {
     id: string;
     userId: string;
@@ -73,8 +88,34 @@ interface Invoice {
         image: string;
       };
     };
+    location: {
+      id: string;
+      address: string;
+      district: string;
+      ward: string;
+      city: string;
+      province: string;
+      vendor: {
+        id: string;
+        name: string;
+        slug: string;
+      };
+    };
   };
   payments: Payment[];
+}
+
+// New interface for album data
+interface AlbumData {
+  id: string;
+  bookingId: string;
+  photos: string[];
+  behindTheScenes: string[];
+  driveLink: string;
+  date: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // Match the route param type to OrderDetail.tsx pattern
@@ -84,34 +125,52 @@ type ParamList = {
   };
 };
 
+interface ReviewData {
+  userId: string;
+  vendorId: string;
+  rating: number;
+  comment: string;
+  bookingId: string;
+  // Remove images from the interface
+}
+
 const UpcomingWorkshopsScreenDetail = () => {
   const [invoice, setInvoice] = useState<Invoice | null>(null);
+  const [albumData, setAlbumData] = useState<AlbumData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [albumLoading, setAlbumLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [isPaymentLoading, setIsPaymentLoading] = useState(false);
+  
+  // Review state
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [rating, setRating] = useState(5);
+  const [comment, setComment] = useState('');
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+  const [vendorId, setVendorId] = useState<string | null>(null);
+  
+  // Remove reviewImages state
+  
   const navigation = useNavigation();
   const route = useRoute<RouteProp<ParamList, 'UpcomingWorkshopsScreenDetail'>>();
   const { invoiceId } = route.params;
   const screenWidth = Dimensions.get('window').width;
-
+  
   useEffect(() => {
     fetchInvoiceDetail();
-    getUserId();
+    // Loại bỏ getUserId() và getVendorId() vì giờ đã lấy từ API response
   }, [invoiceId]);
 
-  const getUserId = async () => {
-    try {
-      const userDataString = await AsyncStorage.getItem('userData');
-      if (userDataString) {
-        const userData = JSON.parse(userDataString);
-        setUserId(userData.id || null);
-      }
-    } catch (err) {
-      console.error('Error fetching user ID:', err);
+  // When invoice is loaded, fetch album data
+  useEffect(() => {
+    if (invoice?.bookingId) {
+      fetchAlbumData(invoice.bookingId);
     }
-  };
+  }, [invoice]);
 
+  // Tìm hàm fetchInvoiceDetail và cập nhật để lưu vendorId từ response
   const fetchInvoiceDetail = async () => {
     setLoading(true);
     
@@ -133,7 +192,7 @@ const UpcomingWorkshopsScreenDetail = () => {
         'Authorization': `Bearer ${accessToken}`
       };
 
-      // Make API request - identical to OrderDetail.tsx
+      // Make API request
       const response = await axios.get(
         `${process.env.EXPO_PUBLIC_API_URL}/invoices/${invoiceId}`,
         { headers }
@@ -143,6 +202,16 @@ const UpcomingWorkshopsScreenDetail = () => {
       
       if (result.statusCode === 200) {
         setInvoice(result.data);
+        
+        // Lấy thông tin vendorId từ response
+        if (result.data.booking?.location?.vendor?.id) {
+          setVendorId(result.data.booking.location.vendor.id);
+        }
+        
+        // Lấy userId từ response
+        if (result.data.booking?.userId) {
+          setUserId(result.data.booking.userId);
+        }
       } else {
         throw new Error(result.message || 'Failed to fetch invoice details');
       }
@@ -152,6 +221,105 @@ const UpcomingWorkshopsScreenDetail = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // New function to fetch album data
+  const fetchAlbumData = async (bookingId: string) => {
+    setAlbumLoading(true);
+    
+    try {
+      // Get access token
+      const userDataString = await AsyncStorage.getItem('userData');
+      const userData = userDataString ? JSON.parse(userDataString) : {};
+      const accessToken = await AsyncStorage.getItem('access_token') || userData?.access_token || userData?.accessToken;
+      
+      if (!accessToken) {
+        throw new Error('Authentication token not found');
+      }
+
+      // Set up headers with access token
+      const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`
+      };
+
+      // Make API request to get album data
+      const response = await axios.get(
+        `${process.env.EXPO_PUBLIC_API_URL}/vendor-albums/album/booking/${bookingId}`,
+        { headers }
+      );
+
+      const result = response.data;
+      
+      if (result.statusCode === 200) {
+        setAlbumData(result.data);
+      } else {
+        console.log('No album data available yet');
+      }
+    } catch (err: any) {
+      console.error('Error fetching album data:', err);
+      // Don't set error state - album data might just not exist yet
+    } finally {
+      setAlbumLoading(false);
+    }
+  };
+
+  // Function to render a photo item
+  const renderPhotoItem = ({ item }: { item: string }) => (
+    <TouchableOpacity
+      style={styles.photoItem}
+      onPress={() => Linking.openURL(item)}
+    >
+      <Image 
+        source={{ uri: item }}
+        style={styles.photoImage}
+        defaultSource={require('../../assets/logotrang.png')}
+      />
+    </TouchableOpacity>
+  );
+
+  // Function to truncate the description
+  const getShortDescription = (description: string) => {
+    if (!description) return '';
+    
+    // If it's already short, just return it
+    if (description.length <= 150) return description;
+    
+    // Otherwise truncate it
+    return description.substring(0, 150) + '...';
+  };
+
+  // Function to generate QR code data
+  const generateQRCodeData = () => {
+    if (!invoice || !userId) return '';
+    
+    // Create a JSON object with booking code and user ID
+    const qrData = {
+      bookingCode: invoice.booking.code,
+      userId: userId,
+      bookingId: invoice.bookingId,
+      invoiceId: invoice.id
+    };
+    
+    // Convert to JSON string
+    return JSON.stringify(qrData);
+  };
+
+  // Function to determine if we should show album sections
+  const shouldShowPhotos = () => {
+    if (!invoice || !albumData) return false;
+    return invoice.booking.status.toLowerCase().includes('đã hoàn thành');
+  };
+
+  const shouldShowBehindTheScenes = () => {
+    if (!invoice || !albumData) return false;
+    return invoice.booking.status.toLowerCase().includes('đang thực hiện') || 
+           invoice.booking.status.toLowerCase().includes('đã hoàn thành');
+  };
+
+  const shouldShowDriveLink = () => {
+    if (!invoice || !albumData) return false;
+    return invoice.booking.status.toLowerCase().includes('đã hoàn thành');
   };
 
   const formatDate = (dateString: string) => {
@@ -212,7 +380,6 @@ const UpcomingWorkshopsScreenDetail = () => {
 
     return (
       <View style={styles.workflowContainer}>
-        
         <Text style={styles.sectionTitle}>Lộ trình thực hiện</Text>
         
         <View style={styles.progressTracker}>
@@ -255,31 +422,218 @@ const UpcomingWorkshopsScreenDetail = () => {
     );
   };
 
-  // Function to truncate the description
-  const getShortDescription = (description: string) => {
-    if (!description) return '';
+  // Function to handle payment for remaining amount
+  const handlePayRemainingAmount = async () => {
+    if (!invoice || !invoiceId) return;
     
-    // If it's already short, just return it
-    if (description.length <= 150) return description;
+    setIsPaymentLoading(true);
     
-    // Otherwise truncate it
-    return description.substring(0, 150) + '...';
+    try {
+      // Get access token
+      const userDataString = await AsyncStorage.getItem('userData');
+      const userData = userDataString ? JSON.parse(userDataString) : {};
+      const accessToken = await AsyncStorage.getItem('access_token') || userData?.access_token || userData?.accessToken;
+      
+      if (!accessToken) {
+        throw new Error('Authentication token not found');
+      }
+
+      // Set up headers with access token
+      const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`
+      };
+
+      // Make API request for payment
+      const response = await axios.post(
+        `${process.env.EXPO_PUBLIC_API_URL}/payments/${invoiceId}/payos/remaining-amount`,
+        {}, // empty body as per API spec
+        { headers }
+      );
+
+      const result = response.data;
+      
+      if (result.statusCode === 201 && result.data?.checkoutUrl) {
+        // Open the checkout URL in the browser
+        await Linking.openURL(result.data.checkoutUrl);
+      } else {
+        throw new Error(result.message || 'Không thể tạo liên kết thanh toán');
+      }
+    } catch (err: any) {
+      console.error('Payment error:', err);
+      Alert.alert(
+        'Lỗi thanh toán', 
+        err.message || 'Đã xảy ra lỗi khi tạo liên kết thanh toán'
+      );
+    } finally {
+      setIsPaymentLoading(false);
+    }
   };
 
-  // Function to generate QR code data
-  const generateQRCodeData = () => {
-    if (!invoice || !userId) return '';
+  // Function to check if invoice has remaining amount to pay
+  const hasRemainingAmount = () => {
+    return invoice && invoice.remainingAmount > 0;
+  };
+
+  // Function to get vendor ID
+  // Xóa hàm getVendorId() vì không cần nữa
+
+  // Remove pickReviewImage and removeReviewImage functions
+
+  // Function to handle review submission
+  const handleSubmitReview = async () => {
+    if (!userId || !invoice || !vendorId) {
+      Alert.alert('Lỗi', 'Thiếu thông tin cần thiết để gửi đánh giá');
+      return;
+    }
+
+    setIsSubmittingReview(true);
+
+    try {
+      // Get access token
+      const userDataString = await AsyncStorage.getItem('userData');
+      const userData = userDataString ? JSON.parse(userDataString) : {};
+      const accessToken = await AsyncStorage.getItem('access_token') || userData?.access_token || userData?.accessToken;
+      
+      if (!accessToken) {
+        throw new Error('Authentication token not found');
+      }
+
+      // Set up headers with access token
+      const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`
+      };
+
+      // Prepare review data
+      const reviewData: ReviewData = {
+        userId: userId,
+        vendorId: vendorId,
+        rating: rating,
+        comment: comment,
+        bookingId: invoice.bookingId,
+        // Remove images property
+      };
+
+      // Make API request for review submission
+      const response = await axios.post(
+        `${process.env.EXPO_PUBLIC_API_URL}/reviews`,
+        reviewData,
+        { headers }
+      );
+
+      if (response.status === 201 || response.status === 200) {
+        Alert.alert('Thành công', 'Cảm ơn bạn đã gửi đánh giá!');
+        setShowReviewModal(false);
+        
+        // Reset review form
+        setRating(5);
+        setComment('');
+        // Remove reviewImages reset
+      } else {
+        throw new Error('Không thể gửi đánh giá');
+      }
+    } catch (err: any) {
+      console.error('Review submission error:', err);
+      Alert.alert(
+        'Lỗi đánh giá', 
+        err.message || 'Đã xảy ra lỗi khi gửi đánh giá'
+      );
+    } finally {
+      setIsSubmittingReview(false);
+    }
+  };
+
+  // Function to check if booking is completed
+  const isBookingCompleted = () => {
+    if (!invoice) return false;
     
-    // Create a JSON object with booking code and user ID
-    const qrData = {
-      bookingCode: invoice.booking.code,
-      userId: userId,
-      bookingId: invoice.bookingId,
-      invoiceId: invoice.id
-    };
+    const status = invoice.booking.status.toLowerCase();
+    return status.includes('đã hoàn thành') || status.includes('hoàn thành');
+  };
+
+  // Cập nhật hàm kiểm tra hiển thị nút đánh giá
+  const canShowReviewButton = () => {
+    if (!invoice) return false;
     
-    // Convert to JSON string
-    return JSON.stringify(qrData);
+    // Kiểm tra cả trạng thái hoàn thành và thuộc tính isReview
+    const status = invoice.booking.status.toLowerCase();
+    const isCompleted = status.includes('đã hoàn thành') || status.includes('hoàn thành');
+    
+    // Chỉ hiển thị nút đánh giá nếu booking đã hoàn thành và isReview là true
+    return isCompleted && invoice.isReview === true;
+  };
+
+  // Render review modal - simplified without image upload
+  const renderReviewModal = () => {
+    return (
+      <Modal
+        visible={showReviewModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowReviewModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Đánh giá buổi chụp</Text>
+              <TouchableOpacity onPress={() => setShowReviewModal(false)}>
+                <Ionicons name="close" size={24} color="#333" />
+              </TouchableOpacity>
+            </View>
+
+            {/* Rating Stars */}
+            <View style={styles.ratingContainer}>
+              <Text style={styles.ratingLabel}>Điểm đánh giá (1-5)</Text>
+              <View style={styles.starsContainer}>
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <TouchableOpacity 
+                    key={star} 
+                    onPress={() => setRating(star)}
+                    style={styles.starButton}
+                  >
+                    <AntDesign 
+                      name={star <= rating ? "star" : "staro"} 
+                      size={30} 
+                      color={star <= rating ? "#FFD700" : "#CCCCCC"} 
+                    />
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            {/* Comment Input */}
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputLabel}>Nội dung đánh giá</Text>
+              <TextInput
+                style={styles.commentInput}
+                placeholder="Chia sẻ trải nghiệm của bạn về buổi chụp hình..."
+                value={comment}
+                onChangeText={setComment}
+                multiline
+                numberOfLines={4}
+                textAlignVertical="top"
+              />
+            </View>
+
+            {/* Remove Image Upload section */}
+
+            {/* Submit Button */}
+            <TouchableOpacity
+              style={styles.submitReviewButton}
+              onPress={handleSubmitReview}
+              disabled={isSubmittingReview}
+            >
+              {isSubmittingReview ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : (
+                <Text style={styles.submitReviewButtonText}>Gửi đánh giá</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+    );
   };
 
   if (loading) {
@@ -526,21 +880,101 @@ const UpcomingWorkshopsScreenDetail = () => {
               )}
             </View>
             
+            {/* Album Photos Section */}
+            {shouldShowPhotos() && albumData?.photos && albumData.photos.length > 0 && (
+              <>
+                <View style={styles.dividerStyled} />
+                <Text style={styles.sectionTitle}>Hình ảnh</Text>
+                <FlatList
+                  data={albumData.photos}
+                  renderItem={renderPhotoItem}
+                  keyExtractor={(item, index) => `photo-${index}`}
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.photoList}
+                />
+              </>
+            )}
+            
+            {/* Behind The Scenes Section */}
+            {shouldShowBehindTheScenes() && albumData?.behindTheScenes && albumData.behindTheScenes.length > 0 && (
+              <>
+                <View style={styles.dividerStyled} />
+                <Text style={styles.sectionTitle}>Hậu trường</Text>
+                <FlatList
+                  data={albumData.behindTheScenes}
+                  renderItem={renderPhotoItem}
+                  keyExtractor={(item, index) => `bts-${index}`}
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.photoList}
+                />
+              </>
+            )}
+            
+            {/* Drive Link Section */}
+            {shouldShowDriveLink() && albumData?.driveLink && (
+              <>
+                <View style={styles.dividerStyled} />
+                <Text style={styles.sectionTitle}>Link Google Drive</Text>
+                <TouchableOpacity 
+                  style={styles.driveLinkContainer}
+                  onPress={() => Linking.openURL(albumData.driveLink)}
+                >
+                  <Ionicons name="cloud-download-outline" size={24} color="#4285F4" />
+                  <Text style={styles.driveLinkText}>Xem toàn bộ album</Text>
+                </TouchableOpacity>
+              </>
+            )}
+            
+            {/* Album Loading Indicator */}
+            {albumLoading && (
+              <View style={styles.albumLoadingContainer}>
+                <ActivityIndicator size="small" color="#f6ac69" />
+                <Text style={styles.albumLoadingText}>Đang tải dữ liệu album...</Text>
+              </View>
+            )}
           </View>
         </View>
       </ScrollView>
       
-      {/* Footer Button */}
       <View style={styles.footer}>
-        <TouchableOpacity 
-          style={styles.contactButton}
-          onPress={() => {
-            // Handle contact action
-          }}
-        >
-          <Text style={styles.contactButtonText}>Liên hệ với chúng tôi</Text>
-        </TouchableOpacity>
+        <View style={styles.footerButtonsContainer}>
+          {/* Payment Button - shown only when there's remaining amount to pay */}
+          {hasRemainingAmount() && (
+            <TouchableOpacity 
+              style={[styles.footerButton, styles.paymentButton]}
+              onPress={handlePayRemainingAmount}
+              disabled={isPaymentLoading}
+            >
+              {isPaymentLoading ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : (
+                <>
+                  <Text style={styles.buttonText}>
+                    Thanh toán {formatPrice(invoice!.remainingAmount)}
+                  </Text>
+                  <Ionicons name="card-outline" size={20} color="#FFFFFF" style={{ marginLeft: 8 }} />
+                </>
+              )}
+            </TouchableOpacity>
+          )}
+          
+          {/* Review Button - shown only for completed bookings that can be reviewed */}
+          {canShowReviewButton() && (
+            <TouchableOpacity 
+              style={[styles.footerButton, styles.reviewButton]}
+              onPress={() => setShowReviewModal(true)}
+            >
+              <Text style={styles.buttonText}>Đánh giá</Text>
+              <Ionicons name="star" size={20} color="#FFFFFF" style={{ marginLeft: 8 }} />
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
+
+      {/* Review Modal */}
+      {renderReviewModal()}
     </View>
   );
 };
@@ -843,13 +1277,26 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#E5E7EB',
   },
-  contactButton: {
-    backgroundColor: '#f6ac69',
+  footerButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  footerButton: {
+    flex: 1,
     borderRadius: 12,
     paddingVertical: 14,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    marginHorizontal: 5,
   },
-  contactButtonText: {
+  paymentButton: {
+    backgroundColor: '#f6ac69',
+  },
+  reviewButton: {
+    backgroundColor: '#4CAF50',
+  },
+  buttonText: {
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
@@ -969,6 +1416,127 @@ const styles = StyleSheet.create({
     marginTop: 15,
     textAlign: 'center',
   },
+  photoList: {
+    paddingVertical: 10,
+  },
+  photoItem: {
+    marginRight: 10,
+    borderRadius: 8,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  photoImage: {
+    width: 150,
+    height: 150,
+    resizeMode: 'cover',
+  },
+  driveLinkContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F0F6FF',
+    padding: 15,
+    borderRadius: 8,
+    marginBottom: 10,
+  },
+  driveLinkText: {
+    marginLeft: 10,
+    fontSize: 16,
+    color: '#4285F4',
+    fontWeight: '500',
+  },
+  albumLoadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  albumLoadingText: {
+    marginLeft: 10,
+    fontSize: 14,
+    color: '#6B7280',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderRadius: 16,
+    padding: 20,
+    width: '100%',
+    maxHeight: '90%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+    paddingBottom: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#111827',
+  },
+  ratingContainer: {
+    marginBottom: 20,
+  },
+  ratingLabel: {
+    fontSize: 16,
+    color: '#374151',
+    marginBottom: 10,
+  },
+  starsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+  },
+  starButton: {
+    padding: 5,
+  },
+  inputContainer: {
+    marginBottom: 20,
+  },
+  inputLabel: {
+    fontSize: 16,
+    color: '#374151',
+    marginBottom: 10,
+  },
+  commentInput: {
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    minHeight: 100,
+    textAlignVertical: 'top',
+  },
+  // Remove imageUploadSection style
+  // Remove selectedImagesContainer style
+  // Remove selectedImageContainer style
+  // Remove selectedImage style
+  // Remove removeImageButton style
+  // Remove imagePickerButton style
+  // Remove imagePickerText style
+  // Remove submitReviewButton style
+  // Remove submitReviewButtonText style
+  submitReviewButton: {
+    backgroundColor: '#f6ac69',
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  submitReviewButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  }
 });
 
 export default UpcomingWorkshopsScreenDetail;
+
