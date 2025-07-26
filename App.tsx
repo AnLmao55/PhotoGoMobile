@@ -21,6 +21,7 @@ import ConceptViewer from './src/screens/ConceptViewer';
 import VendorOwnerDashboard from './src/screens/VendorOwnerDashboard';
 import UpcomingWorkshopsScreen from './src/screens/UpcomingWorkshopsScreen';
 import { LogBox } from 'react-native';
+import VoucherScreen from './src/screens/VoucherScreen';
 
 // Set environment variables
 import { Platform } from 'react-native';
@@ -59,6 +60,14 @@ export default function App() {
                   component={SpinPrizeGame}
                   options={{
                     title: 'Quay thưởng',
+                    headerShown: true
+                  }}
+                />
+                <Stack.Screen
+                  name="VoucherScreen"
+                  component={VoucherScreen}
+                  options={{
+                    title: 'Mã giảm giá',
                     headerShown: true
                   }}
                 />

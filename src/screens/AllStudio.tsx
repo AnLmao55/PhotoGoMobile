@@ -39,7 +39,7 @@ const LOCATION_ENUM = [
 ];
 
 const AllStudio = () => {
-  const navigation = useNavigation()
+  const navigation = useNavigation<any>()
   const [studios, setStudios] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [filterVisible, setFilterVisible] = useState(false)
@@ -171,19 +171,20 @@ const AllStudio = () => {
           <Ionicons name="search" size={20} color="#fff" />
         </TouchableOpacity>
       </View>
-      {/* Sort row */}
+      
+      {/* Sort row - all sort options on one line */}
       <View style={styles.sortRow}>
         <Text style={{ marginRight: 8 }}>Sắp xếp:</Text>
-        {sortOptions.map(opt => (
-          <TouchableOpacity
-            key={opt.value}
-            style={[styles.sortBtn, filters.sortBy === opt.value && styles.sortBtnActive]}
-            onPress={() => handleSort(opt.value)}
-          >
-            <Text style={{ color: filters.sortBy === opt.value ? '#fff' : theme.colors.text }}>{opt.label}</Text>
-          </TouchableOpacity>
-        ))}
-        <View style={styles.sortDirGroup}>
+        <View style={styles.sortOptionsContainer}>
+          {sortOptions.map(opt => (
+            <TouchableOpacity
+              key={opt.value}
+              style={[styles.sortBtn, filters.sortBy === opt.value && styles.sortBtnActive]}
+              onPress={() => handleSort(opt.value)}
+            >
+              <Text style={{ color: filters.sortBy === opt.value ? '#fff' : theme.colors.text }}>{opt.label}</Text>
+            </TouchableOpacity>
+          ))}
           {sortDirOptions.map(opt => (
             <TouchableOpacity
               key={opt.value}
@@ -194,10 +195,16 @@ const AllStudio = () => {
             </TouchableOpacity>
           ))}
         </View>
-        <TouchableOpacity onPress={() => setFilterVisible(true)} style={styles.filterIconBtn}>
-          <Ionicons name="filter" size={22} color={theme.colors.primary} />
+      </View>
+      
+      {/* Filter button moved to separate row */}
+      <View style={styles.filterRow}>
+        <TouchableOpacity onPress={() => setFilterVisible(true)} style={styles.filterButton}>
+          <Ionicons name="filter" size={22} color="#fff" />
+          <Text style={styles.filterButtonText}>Bộ lọc</Text>
         </TouchableOpacity>
       </View>
+      
       {loading ? (
         <View style={styles.loadingContainer}>
           <Text>Đang tải...</Text>
@@ -338,7 +345,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: theme.spacing.md,
     marginBottom: theme.spacing.sm,
-    flexWrap: 'wrap',
+  },
+  sortOptionsContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    flexWrap: 'nowrap',
+    alignItems: 'center',
   },
   sortBtn: {
     borderWidth: 1,
@@ -347,18 +359,31 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6,
     marginRight: 8,
-    marginBottom: 4,
   },
   sortBtnActive: {
     backgroundColor: theme.colors.primary,
     borderColor: theme.colors.primary,
   },
-  filterIconBtn: {
-    marginLeft: 0,
-    marginRight: 8,
-    padding: 6,
+  filterRow: {
+    paddingHorizontal: theme.spacing.md,
+    marginBottom: theme.spacing.md,
+    alignItems: 'center',
+  },
+  filterButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.primary,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
     borderRadius: 8,
-    backgroundColor: '#f2f2f2',
+    width: '100%',
+  },
+  filterButtonText: {
+    color: '#fff',
+    marginLeft: 8,
+    fontSize: theme.fontSizes.md,
+    fontWeight: '500',
   },
   listContent: {
     paddingHorizontal: theme.spacing.md,
@@ -455,7 +480,6 @@ const styles = StyleSheet.create({
   },
   sortDirGroup: {
     flexDirection: 'row',
-    marginLeft: 'auto',
   },
 })
 

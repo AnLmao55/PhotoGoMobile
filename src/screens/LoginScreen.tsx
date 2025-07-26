@@ -273,13 +273,13 @@ const LoginScreen: React.FC = () => {
           {isLoading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Đăng nhập</Text>}
         </TouchableOpacity>
 
-        <View style={styles.orContainer}>
+        {/* <View style={styles.orContainer}>
           <View style={styles.line} />
           <Text style={styles.or}>Hoặc tiếp tục với</Text>
           <View style={styles.line} />
-        </View>
+        </View> */}
 
-        <View style={styles.social}>
+        {/* <View style={styles.social}>
           <TouchableOpacity
             style={[styles.socialButton, isLoading && styles.buttonDisabled]}
             onPress={handleGoogleLogin}
@@ -296,7 +296,7 @@ const LoginScreen: React.FC = () => {
               />
             )}
           </TouchableOpacity>
-        </View>
+        </View> */}
 
         <TouchableOpacity onPress={handleRegister} disabled={isLoading}>
           <Text style={styles.register}>Chưa có tài khoản? Đăng ký ngay</Text>
