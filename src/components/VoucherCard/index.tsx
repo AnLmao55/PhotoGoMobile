@@ -44,6 +44,7 @@ export const VoucherCard: React.FC<VoucherCardProps> = ({
 
     // Remove HTML tags from description
     const stripHtml = (html: string) => {
+        if (!html) return '';
         return html.replace(/<\/?[^>]+(>|$)/g, '');
     };
 
@@ -64,7 +65,7 @@ export const VoucherCard: React.FC<VoucherCardProps> = ({
             
             <View style={styles.bottomSection}>
                 <Text style={styles.condition}>
-                    Đơn tối thiểu: {minSpend.toLocaleString('vi-VN')} VNĐ
+                    Đơn tối thiểu: {minSpend ? minSpend.toLocaleString('vi-VN') : 0} VNĐ
                 </Text>
                 <Text style={styles.expiry}>
                     HSD: {formatDate(validUntil)}

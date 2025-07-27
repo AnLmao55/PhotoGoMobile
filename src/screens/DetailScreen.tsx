@@ -48,9 +48,9 @@ const DetailScreen: React.FC = () => {
                 <ScrollView contentContainerStyle={styles.scrollContent}>
                     <Carousel studio={studio} />
                     <StudioInfoCard studio={studio} />
-                    <VoucherCard />
+                    {/* <VoucherCard /> */}
                     <IntroductionSection studio={studio} />
-                    <VoucherList />
+                    {/* <VoucherList /> */}
                     <ServiceList studio={studio} />
                     <WorkList studio={studio} />
                     <ReviewList studio={studio} />
