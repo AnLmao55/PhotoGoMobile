@@ -32,6 +32,8 @@ const logo = require("../../assets/logotrang.png");
 const backgroundImage = require("../../assets/login-background.jpg");
 const { width: screenWidth } = Dimensions.get("window");
 
+const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://api.photogo.id.vn/api/v1';
+
 const LoginScreen: React.FC = () => {
   const navigation = useNavigation();
   const [email, setEmail] = useState("");
@@ -150,7 +152,7 @@ const LoginScreen: React.FC = () => {
 
     try {
       const response = await axios.post(
-        `${Constants.expoConfig?.extra?.apiUrl || process.env.EXPO_PUBLIC_API_URL}/auth/login`,
+        `${API_URL}/auth/login`,
         {
           email,
           password,

@@ -16,6 +16,7 @@ import { theme } from '../../theme/theme';
 import axios from 'axios';
 import Constants from 'expo-constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { axiosPrivate } from '../../config/config';
 
 const { width } = Dimensions.get('window');
 
@@ -140,6 +141,9 @@ const ScheduleScreen: React.FC = () => {
   // Days of week
   const daysOfWeek = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
   
+  // Add this import at the top of the file
+  const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://api.photogo.id.vn/api/v1';
+
   // Fetch vendor data on component mount
   useEffect(() => {
     fetchVendorData();
@@ -175,12 +179,12 @@ const ScheduleScreen: React.FC = () => {
       console.log('Vendor API Request:', {
         userId,
         hasAccessToken: !!accessToken,
-        apiUrl: Constants.expoConfig?.extra?.apiUrl || process.env.EXPO_PUBLIC_API_URL
+        apiUrl: API_URL
       });
       
       // Make API request to get vendor data
       const response = await axios.get(
-        `${Constants.expoConfig?.extra?.apiUrl || process.env.EXPO_PUBLIC_API_URL}/vendors/user/${userId}`,
+        `${API_URL}/vendors/user/${userId}`,
         {
           headers: {
             Authorization: `Bearer ${accessToken}`
@@ -263,17 +267,8 @@ const ScheduleScreen: React.FC = () => {
         throw new Error('Authentication token not found');
       }
       
-      // Get API URL
-      const apiUrl = Constants.expoConfig?.extra?.apiUrl || process.env.EXPO_PUBLIC_API_URL;
-      
-      // Verify API URL is defined
-      if (!apiUrl) {
-        console.error('API URL is undefined');
-        throw new Error('API URL configuration is missing');
-      }
-      
       // Build the full URL with query parameters
-      const fullUrl = `${apiUrl}/locations/${locationId}/location-overview?from=${encodedFromDate}&to=${encodedToDate}`;
+      const fullUrl = `${API_URL}/locations/${locationId}/location-overview?from=${encodedFromDate}&to=${encodedToDate}`;
       
       // Log request parameters
       console.log('Schedule API Request:', {

@@ -2,16 +2,22 @@
 import axios, { AxiosError } from 'axios';
 import { SercuseService } from '../helpers/secureStorage';
 import { decodeToken } from '../utils/decode';
+import Constants from 'expo-constants';
+
+// Get API URL from environment variables or Constants
+const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://api.photogo.id.vn/api/v1';
+
+console.log('Using API URL:', API_URL);
 
 const axiosClient = axios.create({
-    baseURL: process.env.EXPO_PUBLIC_API_URL,
+    baseURL: API_URL,
     headers: {
         'Content-Type': 'application/json',
     },
 });
 
 const axiosPrivate = axios.create({
-    baseURL: process.env.EXPO_PUBLIC_API_URL,
+    baseURL: API_URL,
     headers: {
         'Content-Type': 'application/json',
     },

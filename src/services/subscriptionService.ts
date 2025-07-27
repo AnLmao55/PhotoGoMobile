@@ -2,6 +2,11 @@ import axios from 'axios';
 import Constants from 'expo-constants';
 import { axiosPrivate } from '../config/config';
 
+// Define consistent API URL
+const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://api.photogo.id.vn/api/v1';
+
+console.log('SubscriptionService using API URL:', API_URL);
+
 // Define the subscription plan type
 export interface SubscriptionPlan {
   id: string;
@@ -29,9 +34,8 @@ export interface SubscriptionPlansResponse {
 // Get all subscription plans
 export const getSubscriptionPlans = async (): Promise<SubscriptionPlansResponse> => {
   try {
-    const apiUrl = process.env.EXPO_PUBLIC_API_URL || Constants.expoConfig?.extra?.apiUrl;
     const response = await axios.get(
-      `${apiUrl}/subscription-plans?current=1&pageSize=10&sortBy=createdAt&sortDirection=DESC&isActive=true&planType=ng%C6%B0%E1%BB%9Di%20d%C3%B9ng`
+      `${API_URL}/subscription-plans?current=1&pageSize=10&sortBy=createdAt&sortDirection=DESC&isActive=true&planType=ng%C6%B0%E1%BB%9Di%20d%C3%B9ng`
     );
     return response.data.data;
   } catch (error) {

@@ -22,14 +22,7 @@ import VendorOwnerDashboard from './src/screens/VendorOwnerDashboard';
 import UpcomingWorkshopsScreen from './src/screens/UpcomingWorkshopsScreen';
 import { LogBox } from 'react-native';
 import VoucherScreen from './src/screens/VoucherScreen';
-
-// Set environment variables
-import { Platform } from 'react-native';
 import UpcomingWorkshopsScreenDetail from './src/screens/UpcomingWorkshopsScreenDetail';
-
-if (Platform.OS !== 'web') {
-  process.env.EXPO_PUBLIC_API_URL = 'https://api.photogo.id.vn/api/v1';
-}
 
 // Ignore specific warnings (optional)
 LogBox.ignoreLogs([

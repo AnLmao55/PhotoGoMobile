@@ -42,6 +42,9 @@ interface UserProfileContextType {
 // Create context
 const UserProfileContext = createContext<UserProfileContextType | undefined>(undefined);
 
+// Add near the imports, before the context definition
+const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://api.photogo.id.vn/api/v1';
+
 // Provider component
 export const UserProfileProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [userProfile, setUserProfile] = useState<UserProfileData | null>(null);
@@ -92,7 +95,7 @@ export const UserProfileProvider: React.FC<{ children: ReactNode }> = ({ childre
       }
       
       const response = await axios.get(
-        `${Constants.expoConfig?.extra?.apiUrl || process.env.EXPO_PUBLIC_API_URL}/users/${userId}`,
+        `${API_URL}/users/${userId}`,
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,

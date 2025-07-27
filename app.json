@@ -46,7 +46,8 @@
     "extra": {
       "eas": {
         "projectId": "adafe393-7132-412f-9616-d7965ad54c01"
-      }
+      },
+      "apiUrl": "https://api.photogo.id.vn/api/v1"
     },
     "updates": {
       "enabled": true,

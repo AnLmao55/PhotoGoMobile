@@ -21,6 +21,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import HTML from 'react-native-render-html';
 import { Dimensions } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
+import Constants from 'expo-constants';
 
 // Define the types for the API response - use same interface as OrderDetail.tsx
 interface Payment {
@@ -170,6 +171,8 @@ const UpcomingWorkshopsScreenDetail = () => {
     }
   }, [invoice]);
 
+  const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://api.photogo.id.vn/api/v1';
+
   // Tìm hàm fetchInvoiceDetail và cập nhật để lưu vendorId từ response
   const fetchInvoiceDetail = async () => {
     setLoading(true);
@@ -194,7 +197,7 @@ const UpcomingWorkshopsScreenDetail = () => {
 
       // Make API request
       const response = await axios.get(
-        `${process.env.EXPO_PUBLIC_API_URL}/invoices/${invoiceId}`,
+        `${API_URL}/invoices/${invoiceId}`,
         { headers }
       );
 
@@ -245,7 +248,7 @@ const UpcomingWorkshopsScreenDetail = () => {
 
       // Make API request to get album data
       const response = await axios.get(
-        `${process.env.EXPO_PUBLIC_API_URL}/vendor-albums/album/booking/${bookingId}`,
+        `${API_URL}/vendor-albums/album/booking/${bookingId}`,
         { headers }
       );
 
@@ -446,7 +449,7 @@ const UpcomingWorkshopsScreenDetail = () => {
 
       // Make API request for payment
       const response = await axios.post(
-        `${process.env.EXPO_PUBLIC_API_URL}/payments/${invoiceId}/payos/remaining-amount`,
+        `${API_URL}/payments/${invoiceId}/payos/remaining-amount`,
         {}, // empty body as per API spec
         { headers }
       );
@@ -517,7 +520,7 @@ const UpcomingWorkshopsScreenDetail = () => {
 
       // Make API request for review submission
       const response = await axios.post(
-        `${process.env.EXPO_PUBLIC_API_URL}/reviews`,
+        `${API_URL}/reviews`,
         reviewData,
         { headers }
       );
