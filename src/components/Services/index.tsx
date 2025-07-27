@@ -5,10 +5,14 @@ import { useNavigation } from '@react-navigation/native';
 
 const API_URL = `${process.env.EXPO_PUBLIC_API_URL}/service-packages/filter`;
 
+type NavigationProp = {
+    navigate: (screen: string, params?: any) => void
+};
+
 const Services = () => {
     const [services, setServices] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const navigation = useNavigation();
+    const navigation = useNavigation<NavigationProp>();
 
     useEffect(() => {
         const fetchServices = async () => {
@@ -30,6 +34,13 @@ const Services = () => {
         fetchServices();
     }, []);
 
+    const handleServicePress = (item: any) => {
+        // If vendor data exists and has slug, navigate to ConceptViewer with the slug
+        if (item.vendor && item.vendor.slug) {
+            navigation.navigate('Detail', { slug: item.vendor.slug });
+        }
+    };
+
     return (
         <View style={styles.container}>
             <View style={styles.sectionHeader}>
@@ -46,7 +57,12 @@ const Services = () => {
                 <FlatList
                     data={services}
                     renderItem={({ item }) => (
-                        <View key={item.id} style={styles.card}>
+                        <TouchableOpacity 
+                            key={item.id} 
+                            style={styles.card}
+                            onPress={() => handleServicePress(item)}
+                            activeOpacity={0.8}
+                        >
                             <Image
                                 source={{ uri: item.image || 'https://via.placeholder.com/120x120' }}
                                 style={styles.image}
@@ -57,11 +73,13 @@ const Services = () => {
                                     ? `${item.minPrice.toLocaleString()}₫`
                                     : `${item.minPrice.toLocaleString()}₫ - ${item.maxPrice.toLocaleString()}₫`}
                             </Text>
-                            {/* Có thể thêm các trường khác nếu muốn */}
-                            {/* <TouchableOpacity style={styles.favoriteIcon}>
-                                <Ionicons name="heart-outline" size={24} color={theme.colors.text} />
-                            </TouchableOpacity> */}
-                        </View>
+                            {/* Vendor name display */}
+                            {item.vendor && item.vendor.name && (
+                                <Text style={styles.vendorName} numberOfLines={1}>
+                                    {item.vendor.name}
+                                </Text>
+                            )}
+                        </TouchableOpacity>
                     )}
                     keyExtractor={(item) => item.id}
                     horizontal={true}
@@ -133,6 +151,11 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         marginTop: 2,
         marginBottom: theme.spacing.xs,
+    },
+    vendorName: {
+        fontSize: theme.fontSizes.sm,
+        color: theme.colors.lightText,
+        marginTop: 2,
     },
     loadingContainer: {
         flex: 1,

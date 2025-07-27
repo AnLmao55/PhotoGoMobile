@@ -5,6 +5,7 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
 import * as Linking from 'expo-linking';
+import Constants from 'expo-constants';
 
 // Define types for navigation
 type RootStackParamList = {
@@ -50,6 +51,8 @@ interface InvoicesResponse {
     };
   };
 }
+
+const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://api.photogo.id.vn/api/v1';
 
 const MyOrder = () => {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
@@ -102,7 +105,7 @@ const MyOrder = () => {
         'Authorization': `Bearer ${accessToken}`
       };
       // Build API URL with pagination and filter
-      let url = `${process.env.EXPO_PUBLIC_API_URL}/invoices/user/${userId}?current=${page}&pageSize=${pageSize}&sortBy=issuedAt&sortDirection=desc`;
+      let url = `${API_URL}/invoices/user/${userId}?current=${page}&pageSize=${pageSize}&sortBy=issuedAt&sortDirection=desc`;
       if (status && status !== 'Tất cả') {
         url += `&status=${encodeURIComponent(status)}`;
       }

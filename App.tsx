@@ -21,14 +21,8 @@ import ConceptViewer from './src/screens/ConceptViewer';
 import VendorOwnerDashboard from './src/screens/VendorOwnerDashboard';
 import UpcomingWorkshopsScreen from './src/screens/UpcomingWorkshopsScreen';
 import { LogBox } from 'react-native';
-
-// Set environment variables
-import { Platform } from 'react-native';
+import VoucherScreen from './src/screens/VoucherScreen';
 import UpcomingWorkshopsScreenDetail from './src/screens/UpcomingWorkshopsScreenDetail';
-
-if (Platform.OS !== 'web') {
-  process.env.EXPO_PUBLIC_API_URL = 'https://api.photogo.id.vn/api/v1';
-}
 
 // Ignore specific warnings (optional)
 LogBox.ignoreLogs([
@@ -59,6 +53,14 @@ export default function App() {
                   component={SpinPrizeGame}
                   options={{
                     title: 'Quay thưởng',
+                    headerShown: true
+                  }}
+                />
+                <Stack.Screen
+                  name="VoucherScreen"
+                  component={VoucherScreen}
+                  options={{
+                    title: 'Mã giảm giá',
                     headerShown: true
                   }}
                 />

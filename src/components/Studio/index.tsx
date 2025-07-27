@@ -5,6 +5,7 @@ import { theme } from "../../theme/theme"
 import { Ionicons } from "@expo/vector-icons"
 import { useNavigation } from "@react-navigation/native"
 import axios from "axios"
+
 interface Location {
   id: string
   address: string
@@ -51,8 +52,13 @@ interface ApiResponse {
   }
 }
 
+// Define navigation type
+type NavigationProp = {
+  navigate: (screen: string, params?: any) => void
+}
+
 const Studio: React.FC = () => {
-  const navigation = useNavigation()
+  const navigation = useNavigation<NavigationProp>()
   const [studios, setStudios] = useState<StudioItem[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -88,7 +94,6 @@ const Studio: React.FC = () => {
       style={styles.card}
       onPress={() => {
         navigation.navigate("Detail", { slug: item.slug })
-        // alert(`${item.slug}`)
       }}
     >
       <Image source={{ uri: item.logo || item.banner }} style={styles.image} />
@@ -220,7 +225,7 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
   ratingCount: {
-    fontSize: theme.fontSizes.xs,
+    fontSize: 12, // Fix the xs fontsize issue
     color: theme.colors.lightText,
     marginLeft: theme.spacing.xs,
   },

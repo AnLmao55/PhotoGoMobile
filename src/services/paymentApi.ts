@@ -2,6 +2,11 @@ import axios from "axios";
 import type { LocationAvailabilityResponse, PaymentFormData, VendorData } from "../types/payment"
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+// Define consistent API URL
+const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://api.photogo.id.vn/api/v1';
+
+console.log('PaymentApi using API URL:', API_URL);
+
 // Define the return type for processPayment
 interface PaymentResult {
   success: boolean;
@@ -47,7 +52,7 @@ export const paymentApi = {
   // Fetch vendor data by slug
   fetchVendorBySlug: async (slug: string): Promise<VendorData> => {
     try {
-      const response = await axios.get(`${process.env.EXPO_PUBLIC_API_URL}/vendors/slug/${slug}`);
+      const response = await axios.get(`${API_URL}/vendors/slug/${slug}`);
       const result = response.data;
       
       if (result.statusCode === 200) {
@@ -64,7 +69,7 @@ export const paymentApi = {
   // Fetch vendor data by concept ID
   fetchVendorByConceptId: async (conceptId: string): Promise<VendorData> => {
     try {
-      const response = await axios.get(`${process.env.EXPO_PUBLIC_API_URL}/vendors/concept/${conceptId}`);
+      const response = await axios.get(`${API_URL}/vendors/concept/${conceptId}`);
       const result = response.data;
       
       if (result.statusCode === 200) {
@@ -82,7 +87,7 @@ export const paymentApi = {
   fetchLocationAvailability: async (locationId: string): Promise<LocationAvailabilityResponse> => {
     try {
       const response = await axios.get(
-        `${process.env.EXPO_PUBLIC_API_URL}/location-availability/location/${locationId}?current=1&pageSize=10`,
+        `${API_URL}/location-availability/location/${locationId}?current=1&pageSize=10`,
       )
       const result = await response.data;
 
@@ -105,7 +110,7 @@ export const paymentApi = {
       const formattedDate = `${day}%2F${month}%2F${year}`
 
       const response = await fetch(
-        `${process.env.EXPO_PUBLIC_API_URL}/location-availability/location/${locationId}/date?date=${formattedDate}&current=1&pageSize=10`,
+        `${API_URL}/location-availability/location/${locationId}/date?date=${formattedDate}&current=1&pageSize=10`,
       )
       const result = await response.json()
 
@@ -188,7 +193,7 @@ export const paymentApi = {
       };
       
       const response = await axios.get(
-        `${process.env.EXPO_PUBLIC_API_URL}/vouchers/user/${userId}?current=${page}&pageSize=${pageSize}&from=chi%E1%BA%BFn%20d%E1%BB%8Bch&status=c%C3%B3%20s%E1%BA%B5n&sortBy=maxPrice&sortDirection=desc`, 
+        `${API_URL}/vouchers/user/${userId}?current=${page}&pageSize=${pageSize}&from=chi%E1%BA%BFn%20d%E1%BB%8Bch&status=c%C3%B3%20s%E1%BA%B5n&sortBy=maxPrice&sortDirection=desc`, 
         { headers }
       );
       
@@ -272,7 +277,7 @@ export const paymentApi = {
       const serviceConceptId = paymentData.selectedConcept?.id || "";
       const userId = userData?.id || "";
       const response = await axios.post(
-        `${process.env.EXPO_PUBLIC_API_URL}/bookings?userId=${userId}&serviceConceptId=${serviceConceptId}`,
+        `${API_URL}/bookings?userId=${userId}&serviceConceptId=${serviceConceptId}`,
         requestBody,
         { headers }
       );

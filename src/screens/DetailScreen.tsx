@@ -21,6 +21,9 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { useEffect, useState, } from 'react';
 import axios from 'axios';
 
+// Define consistent API URL
+const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://api.photogo.id.vn/api/v1';
+
 const DetailScreen: React.FC = () => {
     const navigation = useNavigation();
     const route = useRoute();
@@ -33,7 +36,7 @@ const DetailScreen: React.FC = () => {
 
     const fetchStudioInfo = async () => {
         try {
-            const response = await axios.get(`${process.env.EXPO_PUBLIC_API_URL}/vendors/slug/${slug}`);
+            const response = await axios.get(`${API_URL}/vendors/slug/${slug}`);
             console.log("✅ Studio response:", response.data.data);
             setStudio(response.data.data);
         } catch (error) {
@@ -48,9 +51,9 @@ const DetailScreen: React.FC = () => {
                 <ScrollView contentContainerStyle={styles.scrollContent}>
                     <Carousel studio={studio} />
                     <StudioInfoCard studio={studio} />
-                    <VoucherCard />
+                    {/* <VoucherCard /> */}
                     <IntroductionSection studio={studio} />
-                    <VoucherList />
+                    {/* <VoucherList /> */}
                     <ServiceList studio={studio} />
                     <WorkList studio={studio} />
                     <ReviewList studio={studio} />

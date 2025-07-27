@@ -32,6 +32,8 @@ const logo = require("../../assets/logotrang.png");
 const backgroundImage = require("../../assets/login-background.jpg");
 const { width: screenWidth } = Dimensions.get("window");
 
+const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://api.photogo.id.vn/api/v1';
+
 const LoginScreen: React.FC = () => {
   const navigation = useNavigation();
   const [email, setEmail] = useState("");
@@ -150,7 +152,7 @@ const LoginScreen: React.FC = () => {
 
     try {
       const response = await axios.post(
-        `${Constants.expoConfig?.extra?.apiUrl || process.env.EXPO_PUBLIC_API_URL}/auth/login`,
+        `${API_URL}/auth/login`,
         {
           email,
           password,
@@ -273,13 +275,13 @@ const LoginScreen: React.FC = () => {
           {isLoading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Đăng nhập</Text>}
         </TouchableOpacity>
 
-        <View style={styles.orContainer}>
+        {/* <View style={styles.orContainer}>
           <View style={styles.line} />
           <Text style={styles.or}>Hoặc tiếp tục với</Text>
           <View style={styles.line} />
-        </View>
+        </View> */}
 
-        <View style={styles.social}>
+        {/* <View style={styles.social}>
           <TouchableOpacity
             style={[styles.socialButton, isLoading && styles.buttonDisabled]}
             onPress={handleGoogleLogin}
@@ -296,7 +298,7 @@ const LoginScreen: React.FC = () => {
               />
             )}
           </TouchableOpacity>
-        </View>
+        </View> */}
 
         <TouchableOpacity onPress={handleRegister} disabled={isLoading}>
           <Text style={styles.register}>Chưa có tài khoản? Đăng ký ngay</Text>

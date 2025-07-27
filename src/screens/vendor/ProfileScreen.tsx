@@ -76,6 +76,8 @@ const ProfileScreen: React.FC = () => {
     fetchVendorProfile();
   }, []);
 
+  const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://api.photogo.id.vn/api/v1';
+
   const fetchVendorProfile = async () => {
     try {
       setLoading(true);
@@ -99,7 +101,7 @@ const ProfileScreen: React.FC = () => {
 
       // Make API request
       const response = await axios.get(
-        `${Constants.expoConfig?.extra?.apiUrl || process.env.EXPO_PUBLIC_API_URL}/vendors/user/${userId}`,
+        `${API_URL}/vendors/user/${userId}`,
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,

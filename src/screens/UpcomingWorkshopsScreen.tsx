@@ -6,6 +6,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
 import * as Linking from 'expo-linking';
 import { Calendar, DateData } from 'react-native-calendars';
+import Constants from 'expo-constants';
 
 // Define types for navigation
 type RootStackParamList = {
@@ -51,6 +52,8 @@ interface InvoicesResponse {
     };
   };
 }
+
+const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://api.photogo.id.vn/api/v1';
 
 const UpcomingWorkshopsScreen = () => {
   const [workshops, setWorkshops] = useState<Invoice[]>([]);
@@ -103,7 +106,7 @@ const UpcomingWorkshopsScreen = () => {
       // Process each status one by one
       for (const status of workshopStatuses) {
         // Build API URL for this specific status
-        let url = `${process.env.EXPO_PUBLIC_API_URL}/invoices/user/${userId}?current=${page}&pageSize=${pageSize}&sortBy=issuedAt&sortDirection=desc&status=${encodeURIComponent(status)}`;
+        let url = `${API_URL}/invoices/user/${userId}?current=${page}&pageSize=${pageSize}&sortBy=issuedAt&sortDirection=desc&status=${encodeURIComponent(status)}`;
         
         // Make API request for this status
         const response = await axios.get(url, { headers });

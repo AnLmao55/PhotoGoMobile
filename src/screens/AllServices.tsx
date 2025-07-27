@@ -3,8 +3,14 @@ import { View, Text, FlatList, Image, StyleSheet, TouchableOpacity, ActivityIndi
 import { theme } from '../theme/theme';
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
+import { useNavigation } from '@react-navigation/native';
+
 const API_URL = `${process.env.EXPO_PUBLIC_API_URL}/service-packages/filter`;
 const SERVICE_TYPE_API = `${process.env.EXPO_PUBLIC_API_URL}/service-packages/service-type`;
+
+type NavigationProp = {
+  navigate: (screen: string, params?: any) => void
+};
 
 const defaultParams: {
   name: string;
@@ -38,6 +44,7 @@ const sortDirOptions = [
 ];
 
 const AllServices = () => {
+  const navigation = useNavigation<NavigationProp>();
   const [services, setServices] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -129,8 +136,20 @@ const AllServices = () => {
     });
   };
 
+  // Handle service item press
+  const handleServicePress = (item: any) => {
+    // If vendor data exists and has slug, navigate to Detail screen with the slug
+    if (item.vendor && item.vendor.slug) {
+      navigation.navigate('Detail', { slug: item.vendor.slug });
+    }
+  };
+
   const renderItem = ({ item }: { item: any }) => (
-    <View style={styles.card}>
+    <TouchableOpacity 
+      style={styles.card}
+      onPress={() => handleServicePress(item)}
+      activeOpacity={0.8}
+    >
       <Image source={{ uri: item.image || 'https://via.placeholder.com/120x120' }} style={styles.image} />
       <Text style={styles.name} numberOfLines={1}>{item.name}</Text>
       <Text style={styles.price}>
@@ -138,7 +157,13 @@ const AllServices = () => {
           ? `${item.minPrice.toLocaleString()}₫`
           : `${item.minPrice.toLocaleString()}₫ - ${item.maxPrice.toLocaleString()}₫`}
       </Text>
-    </View>
+      {/* Vendor name display */}
+      {item.vendor && item.vendor.name && (
+        <Text style={styles.vendorName} numberOfLines={1}>
+          {item.vendor.name}
+        </Text>
+      )}
+    </TouchableOpacity>
   );
 
   return (
@@ -156,31 +181,40 @@ const AllServices = () => {
           <Ionicons name="search" size={20} color="#fff" />
         </TouchableOpacity>
       </View>
-      {/* Sort row */}
+      
+      {/* Sort row - all sort options on one line */}
       <View style={styles.sortRow}>
         <Text style={{ marginRight: 8 }}>Sắp xếp:</Text>
-        {sortOptions.map(opt => (
-          <TouchableOpacity
-            key={opt.value}
-            style={[styles.sortBtn, params.sortBy === opt.value && styles.sortBtnActive]}
-            onPress={() => handleSort(opt.value)}
-          >
-            <Text style={{ color: params.sortBy === opt.value ? '#fff' : theme.colors.text }}>{opt.label}</Text>
-          </TouchableOpacity>
-        ))}
-        {sortDirOptions.map(opt => (
-          <TouchableOpacity
-            key={opt.value}
-            style={[styles.sortBtn, params.sortDirection === opt.value && styles.sortBtnActive]}
-            onPress={() => handleSortDir(opt.value)}
-          >
-            <Text style={{ color: params.sortDirection === opt.value ? '#fff' : theme.colors.text }}>{opt.label}</Text>
-          </TouchableOpacity>
-        ))}
-        <TouchableOpacity onPress={() => setFilterVisible(true)} style={styles.filterIconBtn}>
-          <Ionicons name="filter" size={22} color={theme.colors.primary} />
+        <View style={styles.sortOptionsContainer}>
+          {sortOptions.map(opt => (
+            <TouchableOpacity
+              key={opt.value}
+              style={[styles.sortBtn, params.sortBy === opt.value && styles.sortBtnActive]}
+              onPress={() => handleSort(opt.value)}
+            >
+              <Text style={{ color: params.sortBy === opt.value ? '#fff' : theme.colors.text }}>{opt.label}</Text>
+            </TouchableOpacity>
+          ))}
+          {sortDirOptions.map(opt => (
+            <TouchableOpacity
+              key={opt.value}
+              style={[styles.sortBtn, params.sortDirection === opt.value && styles.sortBtnActive]}
+              onPress={() => handleSortDir(opt.value)}
+            >
+              <Text style={{ color: params.sortDirection === opt.value ? '#fff' : theme.colors.text }}>{opt.label}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+      
+      {/* Filter button moved to separate row */}
+      <View style={styles.filterRow}>
+        <TouchableOpacity onPress={() => setFilterVisible(true)} style={styles.filterButton}>
+          <Ionicons name="filter" size={22} color="#fff" />
+          <Text style={styles.filterButtonText}>Bộ lọc</Text>
         </TouchableOpacity>
       </View>
+      
       {loading ? (
         <ActivityIndicator size="large" color={theme.colors.primary} style={{ marginVertical: 20 }} />
       ) : error ? (
@@ -213,6 +247,7 @@ const AllServices = () => {
           <Text>Sau</Text>
         </TouchableOpacity>
       </View>
+      
       {/* Filter Modal */}
       <Modal
         visible={filterVisible}
@@ -318,7 +353,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: theme.spacing.md,
     marginBottom: theme.spacing.sm,
-    flexWrap: 'wrap',
+  },
+  sortOptionsContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    flexWrap: 'nowrap',
+    alignItems: 'center',
   },
   sortBtn: {
     borderWidth: 1,
@@ -327,11 +367,31 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6,
     marginRight: 8,
-    marginBottom: 4,
   },
   sortBtnActive: {
     backgroundColor: theme.colors.primary,
     borderColor: theme.colors.primary,
+  },
+  filterRow: {
+    paddingHorizontal: theme.spacing.md,
+    marginBottom: theme.spacing.md,
+    alignItems: 'center',
+  },
+  filterButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.primary,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    width: '100%',
+  },
+  filterButtonText: {
+    color: '#fff',
+    marginLeft: 8,
+    fontSize: theme.fontSizes.md,
+    fontWeight: '500',
   },
   filterIconBtn: {
     marginLeft: 8,
@@ -375,6 +435,11 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginTop: 2,
     marginBottom: theme.spacing.xs,
+  },
+  vendorName: {
+    fontSize: theme.fontSizes.sm,
+    color: theme.colors.lightText,
+    marginTop: 2,
   },
   pagination: {
     flexDirection: 'row',

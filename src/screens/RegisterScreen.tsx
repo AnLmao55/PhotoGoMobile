@@ -42,6 +42,8 @@ const logAsyncStorageContent = async () => {
   }
 };
 
+const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://api.photogo.id.vn/api/v1';
+
 const RegisterScreen: React.FC = () => {
     const navigation = useNavigation();
     const [fullName, setFullName] = useState("");
@@ -79,7 +81,7 @@ const RegisterScreen: React.FC = () => {
 
         try {
             const response = await axios.post(
-                `${process.env.EXPO_PUBLIC_API_URL}/auth/register`,
+                `${API_URL}/auth/register`,
                 {
                     fullName,
                     avatarUrl: "",
@@ -150,7 +152,7 @@ const RegisterScreen: React.FC = () => {
 
         try {
             await axios.post(
-                `${process.env.EXPO_PUBLIC_API_URL}/auth/activate`,
+                `${API_URL}/auth/activate`,
                 null, // không có body
                 {
                     params: {
