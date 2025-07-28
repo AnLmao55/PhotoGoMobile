@@ -1,28 +1,51 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import axios from 'axios';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet } from 'react-native';
+type Props = {
+    studio: any;
+};
 
-const StudioInfoCard: React.FC = () => {
+const StudioInfoCard: React.FC<Props> = ({ studio }) => {
+    const isOpen = studio.status === "hoạt động";
+
     return (
         <View style={styles.card}>
             <View style={styles.headerRow}>
-                <Text style={styles.title}>Ánh Dương Studio</Text>
-                <View style={styles.statusBadge}>
-                    <Text style={styles.statusText}>Mở cửa</Text>
-                </View>
+                <Text style={styles.title}>{studio.name || "Studio chưa rõ"}</Text>
+            </View>
+
+            <View
+                style={[
+                    styles.statusBadge,
+                    { backgroundColor: isOpen ? '#d4f5dd' : '#fcdede' },
+                ]}
+            >
+                <Text
+                    style={[
+                        styles.statusText,
+                        { color: isOpen ? '#0f9d58' : '#d93025' },
+                    ]}
+                >
+                    {isOpen ? "Mở cửa" : "Đóng cửa"}
+                </Text>
             </View>
 
             <View style={styles.infoRow}>
                 <Text style={styles.star}>⭐</Text>
-                <Text style={styles.rating}>4.8</Text>
-                <Text style={styles.ratingCount}>(128)</Text>
+                <Text style={styles.rating}>{studio.averageRating?.toFixed(1) ?? "N/A"}</Text>
+                <Text style={styles.ratingCount}>({studio.reviewCount ?? 0})</Text>
                 <Text style={styles.dot}>•</Text>
-                <Text style={styles.location}>Quận 1, TP. Hồ Chí Minh</Text>
+                <Text style={styles.location}>
+                    {studio.locations?.[0]
+                        ? [studio.locations[0].address, studio.locations[0].district, studio.locations[0].city].filter(Boolean).join(", ")
+                        : "Không rõ địa chỉ"}
+                </Text>
             </View>
 
             <View style={styles.tagContainer}>
-                {['Chụp ảnh cưới', 'Chụp ảnh gia đình', 'Chụp ảnh sự kiện'].map((tag, index) => (
+                {(studio.servicePackages || []).map((pkg: any, index: number) => (
                     <View key={index} style={styles.tag}>
-                        <Text style={styles.tagText}>{tag}</Text>
+                        <Text style={styles.tagText}>{pkg.name}</Text>
                     </View>
                 ))}
             </View>
@@ -46,21 +69,24 @@ const styles = StyleSheet.create({
         color: '#1a1a1a',
     },
     statusBadge: {
-        backgroundColor: '#d4f5dd',
         paddingVertical: 4,
         paddingHorizontal: 10,
         borderRadius: 20,
+        marginTop: 10,
+        width: 75,
+        alignItems: 'center',
     },
     statusText: {
-        color: '#0f9d58',
         fontWeight: '600',
         fontSize: 12,
     },
     infoRow: {
         flexDirection: 'row',
+        flexWrap: 'wrap', // Allow text to wrap onto the next line
         alignItems: 'center',
         marginTop: 6,
     },
+
     star: {
         fontSize: 14,
         color: '#fbbc04',
@@ -84,7 +110,12 @@ const styles = StyleSheet.create({
     location: {
         fontSize: 13,
         color: '#555',
+        flexShrink: 1, // Allow text to shrink if needed
+        flexGrow: 1,   // Allow text to grow and take up remaining space
+        flexBasis: 'auto',
+        minWidth: 0,   // Prevents text from forcing container to overflow
     },
+
     tagContainer: {
         flexDirection: 'row',
         flexWrap: 'wrap',

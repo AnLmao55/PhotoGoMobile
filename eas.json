@@ -6,14 +6,32 @@
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "internal"
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_RUNTIME_VERSION": "1.0.0",
+        "EXPO_PUBLIC_API_URL": "https://api.photogo.id.vn/api/v1"
+      }
     },
     "preview": {
-      "distribution": "internal"
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_RUNTIME_VERSION": "1.0.0",
+        "EXPO_PUBLIC_API_URL": "https://api.photogo.id.vn/api/v1"
+      }
     },
     "production": {
       "autoIncrement": true,
-      "channel": "production"
+      "channel": "production",
+      "env": {
+        "EXPO_RUNTIME_VERSION": "1.0.0",
+        "EXPO_PUBLIC_API_URL": "https://api.photogo.id.vn/api/v1"
+      }
     }
   },
   "submit": {

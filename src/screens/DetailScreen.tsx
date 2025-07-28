@@ -12,33 +12,62 @@ import Carousel from '../components/CarouselDetail';
 import StudioInfoCard from '../components/StudioInfoCard';
 import VoucherCard from '../components/VoucherCard';
 import IntroductionSection from '../components/IntroductionSection';
-
 import VoucherList from '../components/VoucherCard2';
 import ServiceList from '../components/ServiceLIst';
 import WorkList from '../components/WorkList';
 import ReviewList from '../components/ReviewItem';
 import ScreenWithStickyButton from '../components/ScreenWithStickyButton';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { useEffect, useState, } from 'react';
+import axios from 'axios';
+
+// Define consistent API URL
+const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://api.photogo.id.vn/api/v1';
 
 const DetailScreen: React.FC = () => {
+    const navigation = useNavigation();
+    const route = useRoute();
+    const { slug } = route.params as { slug: string };
+    const [studio, setStudio] = useState<any>({}); // Adjust based on your API shape
+
+    useEffect(() => {
+        fetchStudioInfo();
+    }, []);
+
+    const fetchStudioInfo = async () => {
+        try {
+            const response = await axios.get(`${API_URL}/vendors/slug/${slug}`);
+            console.log("✅ Studio response:", response.data.data);
+            setStudio(response.data.data);
+        } catch (error) {
+            // console.error("❌ Failed to fetch studio info:", error);
+        }
+    };
+
+
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.contentContainer}>
                 <ScrollView contentContainerStyle={styles.scrollContent}>
-                    <Carousel />
-                    <StudioInfoCard />
-                    <VoucherCard />
-                    <IntroductionSection />
-                    <VoucherList />
-                    <ServiceList />
-                    <WorkList />
-                    <ReviewList />
+                    <Carousel studio={studio} />
+                    <StudioInfoCard studio={studio} />
+                    {/* <VoucherCard /> */}
+                    <IntroductionSection studio={studio} />
+                    {/* <VoucherList /> */}
+                    <ServiceList studio={studio} />
+                    <WorkList studio={studio} />
+                    <ReviewList studio={studio} />
                 </ScrollView>
 
                 <View style={styles.stickyButtonContainer}>
-                    <TouchableOpacity style={styles.stickyButton}>
+                    <TouchableOpacity
+                        style={styles.stickyButton}
+                        onPress={() => navigation.navigate('Booking', { slug })}
+                    >
                         <Ionicons name="calendar-outline" size={20} color="white" style={{ marginRight: 8 }} />
                         <Text style={styles.stickyButtonText}>Đặt lịch ngay</Text>
                     </TouchableOpacity>
+
                 </View>
             </View>
         </SafeAreaView>

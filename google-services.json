@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "95785649270",
+    "project_id": "ggauth-133f6",
+    "storage_bucket": "ggauth-133f6.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:95785649270:android:7d8e352a69e19c583bcb57",
+        "android_client_info": {
+          "package_name": "com.mobile.PhotoGo"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCqYae5jSewKCjFjU2dmXayxMmlRZ8Q9Xo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

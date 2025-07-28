@@ -9,6 +9,7 @@ import Studio from '../components/Studio';
 import MakeupArtists from '../components/MakeupArtists';
 import Review from '../components/Review';
 
+
 const carouselData = [
   {
     id: 1,
@@ -37,9 +38,10 @@ const HomeScreen: React.FC = () => {
         autoPlay={true}
         interval={3000}
       />
-      <Services />
       <Studio/>
-      <MakeupArtists/>
+      <Services />   
+      
+      {/* <MakeupArtists/> */}
       <Review/>
     </View>
   );

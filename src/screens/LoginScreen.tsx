@@ -1,242 +1,357 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, Alert } from 'react-native';
-import { theme } from '../theme/theme';
-import { useNavigation } from '@react-navigation/native';
-import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { WebView } from 'react-native-webview';
-import * as WebBrowser from 'expo-web-browser';
-import * as Google from 'expo-auth-session/providers/google';
-import { Platform } from 'react-native';
+import type React from "react";
+import { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Image,
+  ImageBackground,
+  StyleSheet,
+  Alert,
+  ActivityIndicator,
+  Dimensions,
+  ScrollView,
+} from "react-native";
+import { theme } from "../theme/theme";
+import { useNavigation } from "@react-navigation/native";
+import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as WebBrowser from "expo-web-browser";
+import { GoogleSignin, statusCodes } from "@react-native-google-signin/google-signin";
+import Svg, { Path } from "react-native-svg";
+import axios from "axios";
+import Constants from "expo-constants";
+import { useAlert } from "../components/Alert/AlertContext";
 
+// Bắt buộc cho Expo Auth
 WebBrowser.maybeCompleteAuthSession();
-const logo = require('../../assets/logocam.png'); // Adjust the path as necessary
 
-const handleWebViewNavigationStateChange = (navState: any) => {
-  const { url } = navState;
+// Assets
+const logo = require("../../assets/logotrang.png");
+const backgroundImage = require("../../assets/login-background.jpg");
+const { width: screenWidth } = Dimensions.get("window");
 
-  // Kiểm tra nếu URL chứa /auth/login/google
-  if (url.includes('/auth/login/google')) {
-    try {
-      // Lấy query parameters từ URL
-      const urlObj = new URL(url);
-      const userParam = urlObj.searchParams.get('user');
-      const token = urlObj.searchParams.get('token');
-
-      if (userParam && token) {
-        // Parse thông tin user từ chuỗi JSON
-        const user = JSON.parse(decodeURIComponent(userParam));
-
-        // Lưu thông tin user và token vào AsyncStorage
-        const saveUserData = async () => {
-          try {
-            await AsyncStorage.setItem('userToken', token);
-            await AsyncStorage.setItem('userData', JSON.stringify(user));
-            // Điều hướng đến màn hình chính
-            navigation.navigate('MainTabs');
-            setWebViewUri(null); // Đóng WebView
-          } catch (error) {
-            Alert.alert('Lỗi', 'Không thể lưu thông tin đăng nhập');
-          }
-        };
-
-        saveUserData();
-      }
-    } catch (error) {
-      Alert.alert('Lỗi', 'Không thể xử lý thông tin đăng nhập');
-    }
-  }
-};
+const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://api.photogo.id.vn/api/v1';
 
 const LoginScreen: React.FC = () => {
   const navigation = useNavigation();
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [webViewUri, setWebViewUri] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const { customAlert } = useAlert();
+  
+  // Log AsyncStorage content function
+  
 
-  const [request, response, promptAsync] = Google.useAuthRequest({
-    expoClientId: '48d92f75-1003-4b6f-a593-f4c241a0cda3',
-    iosClientId: 'YOUR_IOS_CLIENT_ID',
-    androidClientId: 'YOUR_ANDROID_CLIENT_ID',
-    webClientId: 'YOUR_WEB_CLIENT_ID',
-    responseType: "id_token",
-    scopes: ['profile', 'email'],
-    redirectUri: Platform.select({
-    native: 'exp://u.expo.dev/adafe393-7132-412f-9616-d7965ad54c01?channel=production',
-    default: 'exp://u.expo.dev/adafe393-7132-412f-9616-d7965ad54c01?channel=production'
-  })
-  });
-
-
-
-  const handleLogin = () => {
-    if (!username || !password) {
-      Alert.alert('Lỗi', 'Vui lòng nhập tên đăng nhập và mật khẩu');
-      return;
-    }
-
-    if (username === 'test' && password === '123') {
-      navigation.navigate('MainTabs');
-    } else {
-      Alert.alert('Lỗi', 'Tên đăng nhập hoặc mật khẩu không đúng');
-    }
-  };
-
-  const handleForgotPassword = () => {
-    navigation.navigate('ForgotPassword');
-  };
-
-  const handleRegister = () => {
-    navigation.navigate('Register');
-  };
-
-  const handleGoogleLogin = async () => {
-
-
+  // Navigate based on user role
+  const navigateBasedOnRole = async () => {
     try {
-      const result = await promptAsync();
-      if (result.type === 'success') {
-        const { id_token } = result.params;
-        const response = await fetch('https://api.photogo.id.vn/api/v1/auth/google', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ idToken: id_token }),
-        });
-        const data = await response.json();
-        if (response.ok && data.redirectUrl) {
-          setWebViewUri(data.redirectUrl);
+      const userDataString = await AsyncStorage.getItem("userData");
+      if (userDataString) {
+        const userData = JSON.parse(userDataString);
+        if (userData.role && userData.role.name) {
+          if (userData.role.name === "vendor-owner") {
+            navigation.navigate("VendorOwnerDashboard" as never);
+          } else {
+            // For customers and other roles
+            navigation.navigate("MainTabs" as never);
+          }
         } else {
-          Alert.alert('Lỗi', data.message || 'Đăng nhập Google thất bại');
+          // Default to MainTabs if role information is missing
+          navigation.navigate("MainTabs" as never);
         }
       }
     } catch (error) {
-      Alert.alert('Lỗi', 'Đã xảy ra lỗi khi đăng nhập Google');
+      console.error("Error navigating based on role:", error);
+      // Default to MainTabs if there's an error
+      navigation.navigate("MainTabs" as never);
     }
   };
 
+  useEffect(() => {
+    GoogleSignin.configure({
+      webClientId: "95785649270-fok0s8um7klc3ko4o7uu3jkcujm2tk09.apps.googleusercontent.com",
+      offlineAccess: true,
+      forceCodeForRefreshToken: true,
+    });
+  }, []);
 
-  // Handle WebView navigation state changes to detect successful login
-  
+  useEffect(() => {
+    checkLoginStatus();
+  }, []);
+
+  const checkLoginStatus = async () => {
+    try {
+      const isLoggedIn = await AsyncStorage.getItem("isLoggedIn");
+      if (isLoggedIn === "true") {
+        navigateBasedOnRole();
+      }
+    } catch (error) {
+      console.error("Error checking login status:", error);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    try {
+      setIsLoading(true);
+      await GoogleSignin.hasPlayServices();
+      const userInfo = await GoogleSignin.signIn();
+
+      if (userInfo) {
+        // For Google login, we'll default to customer role since we don't have role info from Google
+        const userData = {
+          id: userInfo.userId || "",
+          email: userInfo.email || "",
+          name: userInfo.displayName || userInfo.givenName || "",
+          picture: userInfo.photoURL || "",
+          role: { id: "R001", name: "customer", description: "Customer role" }, // Default role for Google login
+          loginMethod: "google",
+          loginTime: new Date().toISOString(),
+        };
+
+        await AsyncStorage.multiSet([
+          ["isLoggedIn", "true"],
+          ["userData", JSON.stringify(userData)],
+          ["userToken", userInfo.idToken || ""],
+          ["loginMethod", "google"],
+        ]);
+        
+        // Log AsyncStorage contents after Google login
+        
+
+        customAlert("Thành công", "Đăng nhập thành công", () => {
+          // Always navigate to MainTabs for Google login since we assume customer role
+          navigation.navigate("MainTabs" as never);
+        });
+      }
+    } catch (error: any) {
+      console.error("Error during Google sign in:", error);
+      if (error.code === statusCodes.SIGN_IN_CANCELLED) {
+        console.log("User cancelled the login flow");
+      } else if (error.code === statusCodes.IN_PROGRESS) {
+        console.log("Sign in is in progress already");
+      } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+        Alert.alert("Lỗi", "Google Play Services không khả dụng hoặc đã lỗi thời");
+      } else {
+        Alert.alert("Lỗi đăng nhập", "Không thể đăng nhập với Google. Vui lòng thử lại.");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleLogin = async () => {
+    if (!email || !password) {
+      Alert.alert("Lỗi", "Vui lòng nhập email và mật khẩu");
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const response = await axios.post(
+        `${API_URL}/auth/login`,
+        {
+          email,
+          password,
+        }
+      );
+
+      const { data } = response.data;
+      const { user, access_token, refresh_token } = data;
+
+      const userData = {
+        id: user.id || "unknown",
+        email: user.email || email,
+        name: user.name || "User",
+        role: user.role || { id: "unknown", name: "unknown", description: "unknown" },
+        cartId: user.cartId || "unknown",
+        wishlistId: user.wishlistId || "unknown",
+        loginMethod: "normal",
+        loginTime: new Date().toISOString(),
+        access_token: access_token || "",
+      };
+
+      await AsyncStorage.multiSet([
+        ["isLoggedIn", "true"],
+        ["userData", JSON.stringify(userData)],
+        ["access_token", access_token || ""],
+        ["refresh_token", refresh_token || ""],
+        ["loginMethod", "normal"],
+        ["wishlistId", userData.wishlistId], // Store wishlistId explicitly
+      ]);
+      
+      // Log AsyncStorage contents after normal login
+      
+      
+      customAlert("Thành công", "Đăng nhập thành công", () => {
+        navigateBasedOnRole();
+      });
+      console.log("Login successful:", userData);
+    } catch (error: any) {
+      console.error("Login error:", error);
+      let errorMessage = "Đã xảy ra lỗi khi đăng nhập. Vui lòng thử lại.";
+
+      if (error.response) {
+        if (error.response.status === 401) {
+          errorMessage = "Email hoặc mật khẩu không đúng";
+        } else if (error.response.data?.message) {
+          errorMessage = error.response.data.message;
+        }
+      } else if (error.request) {
+        errorMessage = "Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng.";
+      }
+
+      Alert.alert("Lỗi", errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleForgotPassword = () => navigation.navigate("ForgotPassword" as never);
+  const handleRegister = () => navigation.navigate("Register" as never);
 
   return (
-    <View style={styles.container}>
-      {webViewUri ? (
-        <WebView
-          source={{ uri: webViewUri }}
-          style={{ flex: 1 }}
-          onNavigationStateChange={handleWebViewNavigationStateChange}
-          onError={() => {
-            Alert.alert('Lỗi', 'Không thể tải trang xác thực');
-            setWebViewUri(null);
-          }}
-        />
-      ) : (
-        <>
-          <Image
-            source={{ uri: 'https://st2.depositphotos.com/1001599/8660/v/450/depositphotos_86601758-stock-illustration-cameraman.jpg' }}
-            style={styles.tripodImage}
-          />
-          <Image source={logo} style={styles.logo} />
-          <TextInput
-            style={styles.input}
-            placeholder="Tên đăng nhập"
-            placeholderTextColor={theme.colors.lightText}
-            value={username}
-            onChangeText={setUsername}
-            autoCapitalize="none"
-          />
-          <View style={styles.passwordContainer}>
-            <TextInput
-              style={[styles.input, styles.passwordInput]}
-              placeholder="Mật khẩu"
-              placeholderTextColor={theme.colors.lightText}
-              secureTextEntry={!showPassword}
-              value={password}
-              onChangeText={setPassword}
+    <ScrollView style={{ flex: 1, backgroundColor: theme.colors.background }}>
+      <View style={{ height: 700, position: "relative" }}>
+        <ImageBackground source={backgroundImage} style={{ width: "100%", height: "60%" }} resizeMode="cover">
+          {/* Lớp phủ để làm sáng background */}
+          <View style={styles.overlay} />
+          <Svg
+            height="100%"
+            width="100%"
+            viewBox="0 0 1440 320"
+            style={{ position: "absolute", bottom: 0 }}
+          >
+            <Path
+              fill={theme.colors.background}
+              d="M0,160L48,170.7C96,181,192,203,288,213.3C384,224,480,224,576,208C672,192,768,160,864,133.3C960,107,1056,85,1152,80C1248,75,1344,85,1392,90.7L1440,96L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"
             />
-            <TouchableOpacity
-              style={styles.eyeIcon}
-              onPress={() => setShowPassword(!showPassword)}
-            >
-              <Ionicons
-                name={showPassword ? 'eye-outline' : 'eye-off-outline'}
-                size={24}
-                color={theme.colors.lightText}
-              />
-            </TouchableOpacity>
+          </Svg>
+          <View style={{ position: "absolute", top: 15, width: "100%", alignItems: "center" }}>
+            <Image source={logo} style={styles.logo} />
           </View>
-          <TouchableOpacity onPress={handleForgotPassword}>
-            <Text style={styles.forgot}>Quên mật khẩu?</Text>
+        </ImageBackground>
+      </View>
+
+      <View style={styles.container}>
+        <TextInput
+          style={styles.input}
+          placeholder="Email"
+          placeholderTextColor={theme.colors.lightText}
+          value={email}
+          onChangeText={setEmail}
+          autoCapitalize="none"
+          keyboardType="email-address"
+          editable={!isLoading}
+        />
+
+        <View style={styles.passwordContainer}>
+          <TextInput
+            style={[styles.input, styles.passwordInput]}
+            placeholder="Mật khẩu"
+            placeholderTextColor={theme.colors.lightText}
+            secureTextEntry={!showPassword}
+            value={password}
+            onChangeText={setPassword}
+            editable={!isLoading}
+          />
+          <TouchableOpacity style={styles.eyeIcon} onPress={() => setShowPassword(!showPassword)} disabled={isLoading}>
+            <Ionicons name={showPassword ? "eye-outline" : "eye-off-outline"} size={24} color={theme.colors.lightText} />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.button} onPress={handleLogin}>
-            <Text style={styles.buttonText}>Đăng nhập</Text>
-          </TouchableOpacity>
-          <View style={styles.orContainer}>
-            <View style={styles.line} />
-            <Text style={styles.or}>Hoặc tiếp tục với</Text>
-            <View style={styles.line} />
-          </View>
-          <View style={styles.social}>
-            <TouchableOpacity style={styles.socialButton} onPress={handleGoogleLogin}>
+        </View>
+
+        <TouchableOpacity onPress={handleForgotPassword} disabled={isLoading}>
+          <Text style={styles.forgot}>Quên mật khẩu?</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.button, isLoading && styles.buttonDisabled]}
+          onPress={handleLogin}
+          disabled={isLoading}
+        >
+          {isLoading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Đăng nhập</Text>}
+        </TouchableOpacity>
+
+        {/* <View style={styles.orContainer}>
+          <View style={styles.line} />
+          <Text style={styles.or}>Hoặc tiếp tục với</Text>
+          <View style={styles.line} />
+        </View> */}
+
+        {/* <View style={styles.social}>
+          <TouchableOpacity
+            style={[styles.socialButton, isLoading && styles.buttonDisabled]}
+            onPress={handleGoogleLogin}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <ActivityIndicator color={theme.colors.primary} />
+            ) : (
               <Image
                 source={{
-                  uri: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/768px-Google_%22G%22_logo.svg.png',
+                  uri: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/768px-Google_%22G%22_logo.svg.png",
                 }}
                 style={styles.socialIcon}
               />
-            </TouchableOpacity>
-          </View>
-          <TouchableOpacity onPress={handleRegister}>
-            <Text style={styles.register}>Chưa có tài khoản? Đăng ký ngay</Text>
+            )}
           </TouchableOpacity>
-        </>
-      )}
-    </View>
+        </View> */}
+
+        <TouchableOpacity onPress={handleRegister} disabled={isLoading}>
+          <Text style={styles.register}>Chưa có tài khoản? Đăng ký ngay</Text>
+        </TouchableOpacity>
+      </View>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    paddingBottom: 100,
-    backgroundColor: theme.colors.background,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     padding: theme.spacing.md,
+    marginTop: -400,
   },
   logo: {
-    width: 100,
-    height: 100,
-    marginBottom: theme.spacing.md,
-    resizeMode: 'contain',
+    width: 200,
+    height: 200,
+    resizeMode: "contain",
+    padding: 10,
+    zIndex: 10,
   },
   input: {
-    width: '80%',
+    width: "80%",
     height: 50,
     borderWidth: 1,
     borderColor: theme.colors.lightText,
     borderRadius: 30,
     paddingHorizontal: theme.spacing.md,
     marginBottom: theme.spacing.sm,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
+    color: "#333", // Add text color so input is visible
   },
   forgot: {
     color: theme.colors.lightText,
-    alignSelf: 'flex-end',
+    alignSelf: "flex-end",
     marginBottom: theme.spacing.md,
   },
   button: {
-    width: '80%',
+    width: "80%",
     height: 50,
     backgroundColor: theme.colors.primary,
     borderRadius: 30,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     marginBottom: theme.spacing.md,
   },
+  buttonDisabled: {
+    opacity: 0.6,
+  },
   buttonText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: theme.fontSizes.md,
   },
   or: {
@@ -244,9 +359,9 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.sm,
   },
   social: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    width: '60%',
+    flexDirection: "row",
+    justifyContent: "space-around",
+    width: "60%",
     marginBottom: theme.spacing.lg,
   },
   socialIcon: {
@@ -256,16 +371,10 @@ const styles = StyleSheet.create({
   register: {
     color: theme.colors.primary,
   },
-  tripodImage: {
-    width: 200,
-    height: 200,
-    marginBottom: theme.spacing.md,
-    resizeMode: 'contain',
-  },
   orContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    width: '80%',
+    flexDirection: "row",
+    alignItems: "center",
+    width: "80%",
     marginVertical: theme.spacing.md,
   },
   line: {
@@ -277,27 +386,31 @@ const styles = StyleSheet.create({
     width: 100,
     height: 50,
     borderRadius: 25,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "#fff",
+    alignItems: "center",
+    justifyContent: "center",
     borderWidth: 1,
     borderColor: theme.colors.lightText,
   },
   passwordContainer: {
-    width: '80%',
-    position: 'relative',
-    justifyContent: 'center',
+    width: "80%",
+    position: "relative",
+    justifyContent: "center",
   },
   passwordInput: {
-    width: '100%',
-    paddingRight: 50, // Make room for the eye icon
+    width: "100%",
+    paddingRight: 50,
   },
   eyeIcon: {
-    position: 'absolute',
+    position: "absolute",
     right: 15,
     top: -5,
-    height: '100%',
-    justifyContent: 'center',
+    height: "100%",
+    justifyContent: "center",
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(255, 255, 255, 0.2)", // Semi-transparent white overlay
   },
 });
 

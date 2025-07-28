@@ -1,0 +1,4 @@
+*sever check: https://u.expo.dev/adafe393-7132-412f-9616-d7965ad54c01?channel-name=production&platform=android&runtime-version=exposdk:53.0.0
+*exp link: exp://u.expo.dev/adafe393-7132-412f-9616-d7965ad54c01?channel=production
+*update: eas update --branch production --message ""
+*build apk: eas build --platform android --profile production

@@ -4,11 +4,11 @@
     "slug": "PhotoGoMobile",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/logocam.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/logocam.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -16,34 +16,47 @@
       "photogo"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "runtimeVersion": {
+        "policy": "appVersion"
+      }
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/logocam.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.mobile.PhotoGo"
+      "package": "com.mobile.PhotoGo",
+      "runtimeVersion": "1.0.0",
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Cho phép PhotoGo sử dụng vị trí của bạn."
+        }
+      ]
     ],
     "extra": {
       "eas": {
         "projectId": "adafe393-7132-412f-9616-d7965ad54c01"
-      }
+      },
+      "apiUrl": "https://api.photogo.id.vn/api/v1"
     },
     "updates": {
       "enabled": true,
       "url": "https://u.expo.dev/adafe393-7132-412f-9616-d7965ad54c01",
-      "runtimeVersion": "sdkVersion"
+      "runtimeVersion": "1.0.0"
     },
-    "runtimeVersion": {
-      "policy": "sdkVersion"
-    }
+    "permissions": [
+      "location"
+    ],
+    "jsEngine": "hermes"
   }
 }
