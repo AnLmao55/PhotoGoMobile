@@ -18,6 +18,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import Constants from 'expo-constants';
 import RenderHTML from 'react-native-render-html';
+import { useNavigation } from '@react-navigation/native';
 
 interface VendorProfile {
   id: string;
@@ -68,6 +69,9 @@ const ProfileScreen: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [vendorProfile, setVendorProfile] = useState<VendorProfile | null>(null);
   const [userData, setUserData] = useState<any>(null);
+
+  // Navigation
+  const navigation = useNavigation();
 
   // Get window dimensions for RenderHTML
   const { width } = useWindowDimensions();
@@ -126,6 +130,37 @@ const ProfileScreen: React.FC = () => {
     
     const location = vendorProfile.locations[0];
     return `${location.address}, ${location.ward}, ${location.district}, ${location.city}`;
+  };
+
+  // Handle logout
+  const handleLogout = async () => {
+    try {
+      // Show confirmation alert
+      Alert.alert(
+        "Đăng xuất",
+        "Bạn có chắc chắn muốn đăng xuất?",
+        [
+          { text: "Hủy", style: "cancel" },
+          { 
+            text: "Đăng xuất", 
+            onPress: async () => {
+              // Clear user data from AsyncStorage
+              await AsyncStorage.multiRemove(['userData', 'access_token', 'refresh_token']);
+              
+              // Navigate to login screen
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'Login' as never }],
+              });
+            },
+            style: "destructive"
+          }
+        ]
+      );
+    } catch (error) {
+      console.error('Error during logout:', error);
+      Alert.alert("Lỗi", "Đã xảy ra lỗi khi đăng xuất. Vui lòng thử lại.");
+    }
   };
 
   if (loading) {
@@ -246,55 +281,15 @@ const ProfileScreen: React.FC = () => {
         </View>
       </View>
 
-      {/* Settings Section */}
-      <View style={styles.settingsContainer}>
-        <Text style={styles.settingsTitle}>Cài đặt hiển thị</Text>
-        
-        {/* Public Profile Toggle */}
-        <View style={styles.settingRow}>
-          <View>
-            <Text style={styles.settingLabel}>Hồ sơ công khai</Text>
-            <Text style={styles.settingDescription}>Cho phép khách hàng tìm thấy hồ sơ của bạn</Text>
-          </View>
-          <Switch
-            trackColor={{ false: "#D1D1D1", true: theme.colors.primary }}
-            thumbColor={Platform.OS === 'ios' ? "#FFFFFF" : "#FFFFFF"}
-            ios_backgroundColor="#D1D1D1"
-            onValueChange={setIsPublicProfile}
-            value={isPublicProfile}
-          />
-        </View>
-        
-        {/* Show Location Toggle */}
-        <View style={styles.settingRow}>
-          <View>
-            <Text style={styles.settingLabel}>Hiển thị địa điểm</Text>
-            <Text style={styles.settingDescription}>Cho phép khách hàng đặt lịch với bạn</Text>
-          </View>
-          <Switch
-            trackColor={{ false: "#D1D1D1", true: theme.colors.primary }}
-            thumbColor={Platform.OS === 'ios' ? "#FFFFFF" : "#FFFFFF"}
-            ios_backgroundColor="#D1D1D1"
-            onValueChange={setShowLocation}
-            value={showLocation}
-          />
-        </View>
-        
-        {/* Email Notifications Toggle */}
-        <View style={styles.settingRow}>
-          <View>
-            <Text style={styles.settingLabel}>Thông báo email</Text>
-            <Text style={styles.settingDescription}>Nhận thông báo qua email</Text>
-          </View>
-          <Switch
-            trackColor={{ false: "#D1D1D1", true: theme.colors.primary }}
-            thumbColor={Platform.OS === 'ios' ? "#FFFFFF" : "#FFFFFF"}
-            ios_backgroundColor="#D1D1D1"
-            onValueChange={setEmailNotifications}
-            value={emailNotifications}
-          />
-        </View>
-      </View>
+      {/* Logout Button */}
+      <TouchableOpacity 
+        style={styles.logoutButton}
+        onPress={handleLogout}
+      >
+        <Ionicons name="log-out-outline" size={22} color="#fff" />
+        <Text style={styles.logoutText}>Đăng xuất</Text>
+      </TouchableOpacity>
+      
     </ScrollView>
   );
 };
@@ -513,6 +508,26 @@ const styles = StyleSheet.create({
     color: '#666',
     marginTop: 3,
     maxWidth: '90%',
+  },
+  logoutButton: {
+    flexDirection: 'row',
+    backgroundColor: '#e74c3c',
+    margin: 15,
+    padding: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  logoutText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginLeft: 10,
   },
 });
 

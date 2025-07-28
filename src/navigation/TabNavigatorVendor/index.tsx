@@ -62,22 +62,7 @@ const TabNavigatorVendor: React.FC = () => {
         },
       })}
     >
-      <Tab.Screen 
-        name="Dashboard" 
-        component={DashboardScreen} 
-        options={{
-          tabBarLabel: "Tổng quan",
-          title: "Quản lý hồ sơ"
-        }}
-      />
-      <Tab.Screen 
-        name="Services" 
-        component={ServicesScreen} 
-        options={{
-          tabBarLabel: "Dịch vụ",
-          title: "Quản lý dịch vụ"
-        }}
-      />
+      
       <Tab.Screen 
         name="Schedule" 
         component={ScheduleScreen}
@@ -86,14 +71,7 @@ const TabNavigatorVendor: React.FC = () => {
           title: "Lịch làm việc"
         }}
       />
-      <Tab.Screen 
-        name="Statistics" 
-        component={StatsScreen}
-        options={{
-          tabBarLabel: "Thống kê",
-          title: "Thống kê"
-        }}
-      />
+      
       <Tab.Screen 
         name="Profile" 
         component={ProfileScreen}
