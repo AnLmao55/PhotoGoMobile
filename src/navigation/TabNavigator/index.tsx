@@ -50,9 +50,8 @@ const TabNavigator: React.FC = () => {
               </View>
             );
 
-          } else if (route.name === 'Yêu thích') {
-            iconName = 'heart-outline';
-          } else if (route.name === 'Hồ sơ') {
+          } 
+           else if (route.name === 'Hồ sơ') {
             iconName = 'person-outline';
           } else {
             iconName = 'person-outline';
@@ -89,7 +88,6 @@ const TabNavigator: React.FC = () => {
     >
       <Tab.Screen name="Trang chủ" component={HomeScreen} />
       <Tab.Screen name="Giỏ hàng" component={CartScreen} />
-      <Tab.Screen name="Yêu thích" component={FavoritesScreen} />
       <Tab.Screen name="Hồ sơ" component={UserProfileScreen} />
     </Tab.Navigator>
   );

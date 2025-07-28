@@ -69,10 +69,7 @@ const Carousel: React.FC<Props> = ({ studio }) => {
                 )}
             </View>
 
-            {/* Heart icon */}
-            <View style={styles.heart}>
-                <Text style={styles.heartText}>♡</Text>
-            </View>
+           
         </View>
     );
 };

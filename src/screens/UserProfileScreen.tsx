@@ -241,7 +241,7 @@ const UserProfileScreen: React.FC = () => {
 
       // Make PUT request to update password
       const response = await axios.put(
-        `${Constants.expoConfig?.extra?.apiUrl || process.env.EXPO_PUBLIC_API_URL}/users/${userId}/change-password`,
+        `${Constants.expoConfig?.extra?.apiUrl || process.env.EXPO_PUBLIC_API_URL}/users/${userId}`,
         requestBody,
         {
           headers: {
